@@ -7,12 +7,12 @@ using Random
 n_dims = 3
 bounds = fill((0, 1), n_dims)
 
-radius = .2
+radius = .18
 
 model(parms) = parms 
 
 # partition boundaries
-p_bounds = range(0, 1, 3)
+p_bounds = range(0, 1, 5)
 
 function p_fun(data, p_bounds)
     nb = length(p_bounds)
