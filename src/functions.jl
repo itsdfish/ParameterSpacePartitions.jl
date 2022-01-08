@@ -48,7 +48,7 @@ end
 
 function generate_proposal(chain::Chain, options)
     Δ = random_position(chain)
-    new_parms = chain.parms .+= Δ
+    new_parms = chain.parms + Δ
     adjust_parms!(new_parms, options)
     return new_parms 
 end

@@ -54,13 +54,16 @@ end
     chain_id
     parms 
     pattern
+    acceptance
 end
 
 function Results(chain_id, chain, iter)
+    acceptance = isempty(chain.acceptance) ? false : chain.acceptance[end]
     return Results(
         iter, 
         chain_id, 
         chain.parms, 
-        chain.pattern
+        chain.pattern,
+        acceptance
     )
 end

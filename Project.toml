@@ -1,6 +1,6 @@
 name = "ParameterSpacePartitions"
 uuid = "64931d76-8770-46b0-8423-0a5d3a7d2d72"
-authors = ["itsdfish <itsdfish@gmail.com> and contributors"]
+authors = ["itsdfish"]
 version = "0.1.0"
 
 [deps]
@@ -12,7 +12,12 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 ThreadedIterables = "11d239b0-c0b9-11e8-1935-d5cfa53abb03"
 
 [compat]
+ConcreteStructs = "v0.2.3"
+Distributions = "v0.25.37"
 julia = "1"
+MCMCChains = "v5.0.3"
+Revise  = "v3.3.1"
+ThreadedIterables = "v0.2.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
