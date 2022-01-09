@@ -22,7 +22,7 @@ model(parms) = parms
 ```
 ## Pattern Function
 
-A second function categorizes the predicted data into a qualitative pattern. At minimum, the pattern function must recieve a data input. In this example, the pattern function also recieves `p_bounds` which represents the partition boundaries of a given dimension. `p_fun` categorizes `data` on each dimension and returns a vector, such as `[1,3,1]`, which indicates the data is in the partition that is 1 in the x axis, 3 on the y axis and 1 on the z axis. 
+A second function categorizes the predicted data into a qualitative pattern. At minimum, the pattern function must recieve a data input. In this example, the pattern function also recieves `p_bounds` which represents the partition boundaries of a given dimension. `p_fun` categorizes `data` on each dimension and returns a vector, such as `[1,2,1]`, which indicates the data is in the partition that is 1 in the x axis, 2 on the y axis and 1 on the z axis. 
 
 ```julia
 function p_fun(data, p_bounds)
@@ -43,7 +43,7 @@ end
 
 ## Model Configuration
 
-This example is a 3 dimensional cube with 4 partitions per dimension, resulting in 2^3 = 8 regions.
+This example is a 3 dimensional cube with 2 partitions per dimension, resulting in 2^3 = 8 regions.
 
 
 ```julia
@@ -153,7 +153,7 @@ As shown below, the algorithm found all 64 partitions. In addition, the size of 
 The following code shows how to visualize the results. 
 
 ```julia
-using GLMakie
+using GLMakie, ColorSchemes
 
 # transform pattern into integer id
 transform!(df, :pattern => denserank => :pattern_id)
