@@ -2,16 +2,9 @@ module ParameterSpacePartitions
     using Distributions, ConcreteStructs, LinearAlgebra
     using ThreadedIterables 
 
-    export random_position,
-        generate_proposal,
-        find_partitions,
-        eval_patterns,
-        initialize,
-        update_position!
+    export find_partitions
 
-
-    export Chain, 
-        Options,
+    export Options,
         Results
 
     include("structs.jl")

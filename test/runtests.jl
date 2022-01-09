@@ -164,3 +164,29 @@ end
     groups = groupby(df, :pattern)
     @test length(groups) == n_part
 end
+
+
+
+@safetestset "update_position!" begin
+    using ParameterSpacePartitions
+    using Test
+    import ParameterSpacePartitions: update_position!, Chain
+
+   
+    parms = [.4]
+    proposal = [.3]
+    pattern = [4,3]
+    chain = Chain(parms, pattern, .3)
+    update_position!(chain, proposal, pattern)
+    @test chain.parms == [.3]
+    @test chain.pattern == [4,3]
+
+    parms = [.4]
+    proposal = [.3]
+    pattern = [4,3]
+    chain = Chain(parms, pattern, .3)
+    update_position!(chain, proposal, [4,5])
+    @test chain.parms == [.4]
+    @test chain.pattern == [4,3]
+  
+end

@@ -119,6 +119,17 @@ function initialize(init_parms, patterns, options)
     return Chain.(init_parms, patterns, options.radius)
 end
 
+"""
+    update_position!(chain, proposal, pattern)
+
+Updates the position of the chain if proposal is accepted 
+
+# Arguments
+
+- `chain`: a chain object for exploring the parameter space 
+- `proposal`: a proposed set of parameters for next location 
+- `pattern`: a data pattern associated with the proposal
+"""
 function update_position!(chain, proposal, pattern)
     if pattern == chain.pattern 
         push!(chain.acceptance, true)

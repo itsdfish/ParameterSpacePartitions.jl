@@ -61,6 +61,12 @@ Broadcast.broadcastable(x::Options) = Ref(x)
 
 An MCMC chain object.
 
+# Arguments
+
+- `parms`: a vector of parameters, i.e the current state of the chain
+- `pattern`: the target pattern of the chain 
+- `radius`: the radius for the jump distribution
+
 # Fields
 
 - `parms`: a vector of parameters, i.e the current state of the chain
@@ -68,7 +74,7 @@ An MCMC chain object.
 - `pattern`: the target pattern of the chain 
 - `radius`: the radius for the jump distribution
 - `acceptance`: a Boolean vector indicating whether a proposal was accepted
-- ``
+- `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case. 
 """
 @concrete mutable struct Chain 
     parms
@@ -88,6 +94,28 @@ function Chain(parms, pattern, radius)
     )
 end
 
+"""
+    Results(chain_id, chain, iter)
+
+Stores results for parameter space partitioning.
+
+# Arguments
+
+- `chain_id`: integer index for chain 
+- `chain`: chain object 
+- `iter`: current iteration
+
+An MCMC chain object.
+
+# Fields
+
+- `iter`: current iteration
+- `chain_id`: integer index for chain 
+- `parms`: parameter vector 
+- `pattern`: target pattern of chain
+- `acceptance`: a Boolean vector indicating whether a proposal was accepted
+- ``
+"""
 @concrete struct Results
     iter
     chain_id
