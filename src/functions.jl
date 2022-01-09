@@ -1,6 +1,8 @@
 """
     find_partitions(model, p_fun, options)
 
+Performs parameter space partitioning.
+
 # Arguments
 
 - `model`: a model function that returns predictions given a vector of parameters 
@@ -26,10 +28,23 @@ function find_partitions(model, p_fun, options)
         update_results!(results, chains, iter)
         # add new chain if new pattern found
         process_new_patterns!(all_patterns, patterns, proposals, chains, options)
+        # adjust the radius of each chain 
+        options.adapt_radius!.(chains, options)
     end
     return results
 end
 
+"""
+    update_results!(results, chains, iter)
+
+Adds chain location (parameters), iteration, chain id, and data pattern to a `Results` vector.
+
+# Arguments 
+
+- `results`: a vector of `Results` objects
+- `chains`: a vector of chains used to explore the parameter space 
+- `iter`: current iteration of the algorithm
+"""
 function update_results!(results, chains, iter)
     for (i,c) in enumerate(chains)
         push!(results, Results(i, c, iter))
@@ -37,6 +52,8 @@ function update_results!(results, chains, iter)
     return nothing
 end
 
+"""
+"""
 function t_eval_patterns(proposals, model, p_fun, options)
         return tmap(p -> p_fun(model(p)), proposals)
 end
@@ -45,7 +62,17 @@ function eval_patterns(proposals, model, p_fun, options)
     return map(p -> p_fun(model(p)), proposals)
 end
 
+"""
+    generate_proposal(chain::Chain, options)
 
+Generates a proposal adding a random sample from the surface of a hypersphere
+to the current location of the `chain`.
+
+# Arguments
+
+- `chain`: a chain for exploring the parameter space
+- `options`: an `Options` object holding the configuration options for the algorithm
+"""
 function generate_proposal(chain::Chain, options)
     Δ = random_position(chain)
     new_parms = chain.parms + Δ
@@ -55,7 +82,7 @@ end
 
 function generate_proposal(parms, options)
     Δ = random_position(options.radius, length(parms))
-    new_parms = parms .+= Δ
+    new_parms = parms + Δ
     adjust_parms!(new_parms, options)
     return new_parms 
 end
@@ -73,6 +100,16 @@ function random_position(chain)
     return random_position(chain.radius, chain.n_dims)
 end
 
+"""
+    random_position(radius, n)
+
+A sample from a uniform distribution over the surface of a hypersphere 
+
+# Arguments
+
+- `radius`: radius of the hypersphere 
+- `n`: the number of dimentions of the hypersphere
+"""
 function random_position(radius, n)
     x = rand(Normal(0, 1), n)
     return x / norm(x) * radius
@@ -103,3 +140,7 @@ function process_new_patterns!(all_patterns, patterns, parms, chains, options)
 end
 
 is_new(all_patterns, pattern) = pattern ∉ all_patterns
+
+function no_adaption(chain, options)
+    return nothing
+end

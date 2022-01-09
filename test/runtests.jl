@@ -11,6 +11,8 @@ using SafeTestsets
     n_dims = 3
     # partitions per dimension
     n_part = 4
+    # number of starting points
+    n_start = 1
 
     # partition boundaries
     p_bounds = range(0, 1, n_part + 1)
@@ -20,7 +22,7 @@ using SafeTestsets
 
     sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 
-    init_parms = map(_ -> sample(bounds), 1:1)
+    init_parms = map(_ -> sample(bounds), 1:n_start)
 
     options = Options(;
         radius = .18,
@@ -59,11 +61,13 @@ end
     using DataFrames
     include("functions.jl")
 
-    Random.seed!(99)
+    Random.seed!(103)
     # partitions per dimension
     n_part = 4
     # dimensions of hypbercue
     n_dims = 5
+    # number of starting points
+    n_start = 1
 
     bounds = fill((0, 1), n_dims)
     # partition boundaries
@@ -73,7 +77,7 @@ end
  
     sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 
-    init_parms = map(_ -> sample(bounds), 1:1)
+    init_parms = map(_ -> sample(bounds), 1:n_start)
 
     options = Options(;
         radius = .15,
@@ -105,4 +109,58 @@ end
     ) |> sort
 
     @test length(groups) == n_part^n_dims
+end
+
+@safetestset "5D Polytope" begin
+    using ParameterSpacePartitions
+    using Test, Random, Distributions
+    using DataFrames, LinearAlgebra
+    Random.seed!(778)
+
+    function p_fun(data, points)
+        distances = map(p -> norm(data .- p), points)
+        _,idx = findmin(distances)
+        return idx
+    end
+
+    # dimensions of the hypbercue
+    n_dims = 5
+    # number of partitions
+    n_part = 50
+    # number of starting points
+    n_start = 1
+    #
+
+    # partition boundaries
+    points = [rand(n_dims) for i in 1:n_part]
+    bounds = fill((0, 1), n_dims)
+
+    model(parms) = parms 
+
+    sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
+
+    init_parms = map(_ -> sample(bounds), 1:n_start)
+
+    options = Options(;
+        radius = .1,
+        bounds,
+        n_iters = 500,
+        parallel = false,
+        init_parms
+    )
+
+    results = find_partitions(
+        model, 
+        x -> p_fun(x, points), 
+        options
+    )
+
+    df = DataFrame(results)
+    transform!(
+        df, 
+        :parms => identity => [:p1, :p2, :p3, :p4, :p5]
+    )
+
+    groups = groupby(df, :pattern)
+    @test length(groups) == n_part
 end
