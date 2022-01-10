@@ -16,6 +16,7 @@ function find_partitions(model, p_fun, options)
     chains = initialize(options.init_parms, patterns, options)
     # add result type
     results = map(c -> Results(c..., 0), enumerate(chains))
+    # list of all observed patterns
     all_patterns = unique(patterns)
     for iter in 1:options.n_iters
         # generate proposal for each chain
@@ -116,6 +117,7 @@ function random_position(radius, n)
 end
 
 function initialize(init_parms, patterns, options)
+    # option for unique
     return Chain.(init_parms, patterns, options.radius)
 end
 

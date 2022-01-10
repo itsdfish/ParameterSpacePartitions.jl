@@ -1,50 +1,53 @@
 # ParameterSpacePartitions
 
-Parameter space partitioning is a model assessment method for mapping qualitative predictions to regions of the parameter space. The parameter space is explored with an MCMC chains. A new chain is created for each newly discovered pattern. Proposals are sampled uniformly from the surface of a hyperspere with the same number of dimensions as the parameter space. 
+Parameter space partitioning is a model assessment method for mapping regions of the parameter space to qualitative data patterns. Parameter space partitioning uses MCMC sampling to explore the parameter space. Each chain searches a region of the parameter space for a specific pattern. As the space is sampled, a new chain is created for each newly discovered pattern. On each iteration, a proposal is sampled uniformly from the surface of a hyperspere with the same number of dimensions as the parameter space. 
 
 # Example
 
 In this simple example, parameter space partitioning is applied to a cube with regions of equal volume.
 ## Load Dependencies
 
-The first step is to load dependences.
+The first step is to the load dependences into your session.
+
 ```julia
 using Distributions, ParameterSpacePartitions
+using ParameterSpacePartitions.TestModels
 using Random, DataFrames
+Random.seed!(544)
 ```
 
 ## Model Function 
 
-Next, we define a model that accepts a vector of parameters and returns data predictions. In this simple example, the model returns the parameter inputs.
+Next, we define a model that accepts a vector of parameters and returns data predictions. The function `model` is imported above from `TestModels`, but is presented below for illustration. In this simple example, the model returns the parameter inputs. In more substantive model, the returned value will be the model predictions.
 
 ```julia 
 model(parms) = parms 
 ```
 ## Pattern Function
 
-A second function categorizes the predicted data into a qualitative pattern. At minimum, the pattern function must recieve a data input. In this example, the pattern function also recieves `p_bounds` which represents the partition boundaries of a given dimension. `p_fun` categorizes `data` on each dimension and returns a vector, such as `[1,2,1]`, which indicates the data is in the partition that is 1 in the x axis, 2 on the y axis and 1 on the z axis. 
+A second function categorizes the predicted data into a qualitative pattern. At minimum, the pattern function must recieve a data input. In this example, the pattern function `p_fun` is imported from `TestModels`. The function is presented below for illustration. `p_fun` requires the location (i.e. parameters) and `HyperCube` object, which contains  partition boundaries (which is the same for each dimension). `p_fun` categorizes `location` on each dimension and returns a vector, such as `[1,2,1]`, which indicates the data is in the partition that is 1 in the x axis, 2 on the y axis and 1 on the z axis. 
 
 ```julia
-function p_fun(data, p_bounds)
-    nb = length(p_bounds)
-    nd = length(data)
-    vals = fill(-100, nd)
-    for j in 1:nd
-        for i in 1:(nb-1) 
-            if (data[j] ≥ p_bounds[i]) && (data[j] ≤ p_bounds[i+1])
-                vals[j] = i 
-                continue
+function p_fun(location, hypercube::HyperCube)
+        p_bounds = hypercube.p_bounds
+        nb = length(p_bounds)
+        nd = length(location)
+        vals = fill(-100, nd)
+        for j in 1:nd
+            for i in 1:(nb-1) 
+                if (location[j] ≥ p_bounds[i]) && (location[j] ≤ p_bounds[i+1])
+                    vals[j] = i 
+                    continue
+                end
             end
         end
+        return vals
     end
-    return vals
-end
 ```
 
 ## Model Configuration
 
-This example is a 3 dimensional cube with 2 partitions per dimension, resulting in 2^3 = 8 regions.
-
+Below, we will set `n_dims` and `n_part` to create a cube with a total of 2^3 = 8 regions.
 
 ```julia
 # dimensions of the hypbercue
@@ -55,16 +58,17 @@ n_part = 2
 
 # Boundaries
 
-In the code below, `bounds` is the upper and lower boundaries for each dimension. In this case, we will use a unit cube. In addition, we must also define `p_bounds`, which is the boundaries for each partition on each dimension. The partitions are equally spaced along each dimension of the unit cube.
+In the code below, `bounds` contains the upper and lower boundaries for each dimension. In addition, we must also define a `HyperCube` object containing the boundaries for each partition. The boundaries are stored in a variable called `p_bounds`.  In this example, the partitions are equally spaced along each dimension of the unit cube. Alternatively, we could use unequal spacing to increase the difficulty of exploring the parameter space.
 
 ```julia
 # partition boundaries
 bounds = fill((0, 1), n_dims)
 p_bounds = range(0, 1, n_part + 1)
+hypercube = HyperCube(p_bounds)
 ```
 
 ## Starting Points
-The algorim requires a starting point to begin exploring the parameter space. The starting points must be wrapped in a vector. The starting points are sampled uniformly within the unit cube, using `bounds` to ensure the starting point is within allowable ranges. Although one starting point is sufficient for the present example, seeding the algorithm with multiple starting points can improve performance. 
+The sampling algorim requires a starting point to begin exploring the parameter space. The starting points must be wrapped in a vector. The starting points are sampled uniformly within the unit cube, using `bounds` to ensure the starting point is within allowable ranges. Although one starting point is sufficient for the present example, seeding the sampling algorithm with multiple starting points can improve performance. 
 
 ```julia 
 # number of starting points
@@ -96,7 +100,7 @@ The function `find_partitions` accepts the `model` function, the pattern functio
 ```julia
 results = find_partitions(
     model, 
-    x -> p_fun(x, p_bounds), 
+    x -> p_fun(x, hypercube), 
     options
 )
 ```
@@ -138,14 +142,14 @@ As shown below, the algorithm found all 64 partitions. In addition, the size of 
  Row │ pattern    p1_minimum  p1_maximum  p2_minimum  p2_maximum  p3_minimum  p3_maximum 
      │ Array…     Float64     Float64     Float64     Float64     Float64     Float64    
 ─────┼───────────────────────────────────────────────────────────────────────────────────
-   1 │ [1, 1, 1]    0.0         0.48967     0.0         0.499932    0.0         0.49681
-   2 │ [1, 1, 2]    0.0         0.495971    0.0         0.499053    0.500689    1.0
-   3 │ [1, 2, 1]    0.0         0.483521    0.501788    1.0         0.0         0.497413
-   4 │ [1, 2, 2]    0.0         0.498217    0.500802    1.0         0.501422    1.0
-   5 │ [2, 1, 1]    0.510802    1.0         0.0         0.499524    0.0         0.497886
-   6 │ [2, 1, 2]    0.500576    1.0         0.0         0.492338    0.502256    1.0
-   7 │ [2, 2, 1]    0.50373     1.0         0.536216    1.0         0.0         0.492919
-   8 │ [2, 2, 2]    0.500171    1.0         0.500525    1.0         0.509783    1.0
+   1 │ [1, 1, 1]    0.0         0.495153    0.0         0.499715    0.0         0.480579
+   2 │ [1, 1, 2]    0.0         0.480361    0.0         0.494112    0.53599     1.0
+   3 │ [1, 2, 1]    0.0         0.49594     0.516987    1.0         0.0         0.456862
+   4 │ [1, 2, 2]    0.0         0.487051    0.502842    1.0         0.500063    1.0
+   5 │ [2, 1, 1]    0.500143    0.932376    0.0         0.495744    0.0         0.498883
+   6 │ [2, 1, 2]    0.516421    1.0         0.0         0.497141    0.581155    0.942603
+   7 │ [2, 2, 1]    0.504149    1.0         0.539577    1.0         0.0         0.481075
+   8 │ [2, 2, 2]    0.518509    1.0         0.529488    1.0         0.503062    1.0
   ```
 
 ## Visualization
@@ -153,7 +157,7 @@ As shown below, the algorithm found all 64 partitions. In addition, the size of 
 The following code shows how to visualize the results. 
 
 ```julia
-using GLMakie, ColorSchemes
+using GLMakie, ColorSchemes, StatsBase
 
 # transform pattern into integer id
 transform!(df, :pattern => denserank => :pattern_id)

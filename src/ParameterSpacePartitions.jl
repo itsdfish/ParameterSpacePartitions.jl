@@ -9,5 +9,6 @@ module ParameterSpacePartitions
 
     include("structs.jl")
     include("functions.jl")
+    include("TestModels.jl")
 
 end

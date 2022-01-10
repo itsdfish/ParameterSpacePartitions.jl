@@ -2,9 +2,9 @@ using SafeTestsets
 
 @safetestset "Cube" begin
     using ParameterSpacePartitions
+    using ParameterSpacePartitions.TestModels
     using Test, Random, Distributions
     using DataFrames
-    include("functions.jl")
 
     Random.seed!(541)
     # dimensions of the hypbercue
@@ -16,9 +16,8 @@ using SafeTestsets
 
     # partition boundaries
     p_bounds = range(0, 1, n_part + 1)
+    hypercube = HyperCube(p_bounds)
     bounds = fill((0, 1), n_dims)
-
-    model(parms) = parms 
 
     sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 
@@ -34,7 +33,7 @@ using SafeTestsets
 
     results = find_partitions(
         model, 
-        x -> p_fun(x, p_bounds), 
+        x -> p_fun(x, hypercube), 
         options
     )
 
@@ -57,9 +56,9 @@ end
 
 @safetestset "5D Hypercube" begin
     using ParameterSpacePartitions
+    using ParameterSpacePartitions.TestModels
     using Test, Random, Distributions
     using DataFrames
-    include("functions.jl")
 
     Random.seed!(103)
     # partitions per dimension
@@ -69,11 +68,11 @@ end
     # number of starting points
     n_start = 1
 
+    # bounds of the hypercube
     bounds = fill((0, 1), n_dims)
     # partition boundaries
     p_bounds = range(0, 1, n_part + 1)
-
-    model(parms) = parms 
+    hypercube = HyperCube(p_bounds)
  
     sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 
@@ -89,7 +88,7 @@ end
 
     results = find_partitions(
         model, 
-        x -> p_fun(x, p_bounds), 
+        x -> p_fun(x, hypercube), 
         options
     )
 
@@ -113,15 +112,10 @@ end
 
 @safetestset "5D Polytope" begin
     using ParameterSpacePartitions
+    using ParameterSpacePartitions.TestModels
     using Test, Random, Distributions
     using DataFrames, LinearAlgebra
     Random.seed!(778)
-
-    function p_fun(data, points)
-        distances = map(p -> norm(data .- p), points)
-        _,idx = findmin(distances)
-        return idx
-    end
 
     # dimensions of the hypbercue
     n_dims = 5
@@ -129,13 +123,11 @@ end
     n_part = 50
     # number of starting points
     n_start = 1
-    #
+    
 
     # partition boundaries
-    points = [rand(n_dims) for i in 1:n_part]
+    polytopes = [Polytope(rand(n_dims)) for i in 1:n_part]
     bounds = fill((0, 1), n_dims)
-
-    model(parms) = parms 
 
     sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 
@@ -151,7 +143,7 @@ end
 
     results = find_partitions(
         model, 
-        x -> p_fun(x, points), 
+        x -> p_fun(x, polytopes), 
         options
     )
 
@@ -165,14 +157,54 @@ end
     @test length(groups) == n_part
 end
 
+@safetestset "HyperSpheres" begin
+    using Test, ParameterSpacePartitions
+    using ParameterSpacePartitions.TestModels
+    using LinearAlgebra, Random, DataFrames, Distributions
+    Random.seed!(221)
+    
+    # dimensions of the hypbercue
+    n_dims = 7
+    # number of partitions
+    n_obj = 50
+    # distribution of radii
+    r_dist = () -> rand(Uniform(.2, .25))
+    # number of starting points
+    n_start = 1
+    
+    # partition boundaries
+    hyperspheres = set_locations(r_dist, n_dims, n_obj)
+    bounds = fill((0, 1), n_dims)
+    
+    sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
+    
+    init_parms = map(_ -> sample(bounds), 1:n_start)
+    
+    options = Options(;
+        radius = .25,
+        bounds,
+        n_iters = 2000,
+        parallel = false,
+        init_parms
+    )
+    
+    results = find_partitions(
+        model, 
+        x -> p_fun(x, hyperspheres), 
+        options
+    )
+    
+    df = DataFrame(results)
+    groups = groupby(df, :pattern)
 
+    @test length(groups) == (n_obj + 1)
+end
 
 @safetestset "update_position!" begin
     using ParameterSpacePartitions
     using Test
     import ParameterSpacePartitions: update_position!, Chain
 
-   
     parms = [.4]
     proposal = [.3]
     pattern = [4,3]
@@ -188,5 +220,4 @@ end
     update_position!(chain, proposal, [4,5])
     @test chain.parms == [.4]
     @test chain.pattern == [4,3]
-  
 end
