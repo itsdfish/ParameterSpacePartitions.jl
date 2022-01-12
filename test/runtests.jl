@@ -33,8 +33,9 @@ using SafeTestsets
 
     results = find_partitions(
         model, 
-        x -> p_fun(x, hypercube), 
-        options
+        p_fun, 
+        options,
+        hypercube
     )
 
     df = DataFrame(results)
@@ -88,8 +89,9 @@ end
 
     results = find_partitions(
         model, 
-        x -> p_fun(x, hypercube), 
-        options
+        p_fun, 
+        options,
+        hypercube
     )
 
     df = DataFrame(results)
@@ -143,8 +145,9 @@ end
 
     results = find_partitions(
         model, 
-        x -> p_fun(x, polytopes), 
-        options
+        p_fun, 
+        options,
+        polytopes
     )
 
     df = DataFrame(results)
@@ -190,8 +193,9 @@ end
     
     results = find_partitions(
         model, 
-        x -> p_fun(x, hyperspheres), 
-        options
+        p_fun, 
+        options,
+        hyperspheres
     )
     
     df = DataFrame(results)

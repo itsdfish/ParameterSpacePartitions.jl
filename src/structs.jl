@@ -5,7 +5,8 @@
         n_iters, 
         init_parms,
         parallel = false,
-        adapt_radius! = no_adaption
+        adapt_radius! = no_adaption!,
+        kwargs...
     )
 
 An object that holds configuration options for the MCMC sampler. 
@@ -34,23 +35,25 @@ the radius. no adaption is the default
 end
 
 function Options(;
-    radius, 
-    bounds, 
-    n_iters, 
-    init_parms,
-    parallel = false,
-    adapt_radius! = no_adaption
-)
+        radius, 
+        bounds, 
+        n_iters, 
+        init_parms,
+        parallel = false,
+        adapt_radius! = no_adaption!,
+        kwargs...
+    )
     p_eval = parallel ? t_eval_patterns : eval_patterns
-    
+    _adapt_radius! = (x,y) -> adapt_radius!(x, y; kwargs...)
+
     return Options(
         parallel,
-         radius, 
-         bounds, 
-         n_iters, 
-         p_eval, 
-         adapt_radius!,
-         init_parms
+        radius, 
+        bounds, 
+        n_iters, 
+        p_eval, 
+        _adapt_radius!,
+        init_parms
     )
 end
 

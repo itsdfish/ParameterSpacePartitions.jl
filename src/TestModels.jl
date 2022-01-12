@@ -11,7 +11,7 @@ module TestModels
         HyperSphere
 
     """
-        model(parms) 
+        model(parms, args...; kwargs...) 
     
     Model function for test models. It is an identity function. 
 
@@ -20,7 +20,7 @@ module TestModels
     - `parms`: a proposed location 
 
     """
-    model(parms) = parms
+    model(parms, args...; kwargs...) = parms
 
     """
         HyperCube
@@ -36,7 +36,7 @@ module TestModels
     end
 
     """
-        p_fun(location, p_bounds::HyperCube)
+        p_fun(location, hypercube::HyperCube, args...; kwargs...)
 
     Returns the qualitative pattern associated with a hypercube. 
 
@@ -46,7 +46,7 @@ module TestModels
     - `p_bounds`: boundaries of partitions for each dimension 
 
     """
-    function p_fun(location, hypercube::HyperCube)
+    function p_fun(location, hypercube::HyperCube, args...; kwargs...)
         p_bounds = hypercube.p_bounds
         nb = length(p_bounds)
         nd = length(location)
@@ -77,7 +77,7 @@ module TestModels
 
 
     """
-        p_fun(location, points::Vector{Polytope})
+        p_fun(location, points::Vector{Polytope}, args...; kwargs...)
 
     Returns the qualitative pattern associated with a polytope. 
 
@@ -87,7 +87,7 @@ module TestModels
     - `points`: a vector of polytopes containing locations
 
     """
-    function p_fun(location, points::Vector{Polytope})
+    function p_fun(location, points::Vector{Polytope}, args...; kwargs...)
         distances = map(p -> norm(location .- p.location), points)
         _,idx = findmin(distances)
         return idx
@@ -151,7 +151,7 @@ module TestModels
     end
 
     """
-        p_fun(location, hyperspheres::Vector{HyperSphere})
+        p_fun(location, hyperspheres::Vector{HyperSphere}, args...; kwargs...)
 
     Returns the qualitative data pattern for hypspheres embedded in a hypercube. -100 is
     returned if the proposed location is not in a hypsphere. Otherwise, an index of the hypersphere 
@@ -162,7 +162,7 @@ module TestModels
     - `location`: a proposed location in a unit hypercube
     - `hyperspheres`: a vector of `HyperSphere` objects
     """
-    function p_fun(location, hyperspheres::Vector{HyperSphere})
+    function p_fun(location, hyperspheres::Vector{HyperSphere}, args...; kwargs...)
         for (i,h) in enumerate(hyperspheres)
             in_contact(h, location) ? (return i) : nothing
         end

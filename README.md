@@ -21,14 +21,14 @@ Random.seed!(544)
 Next, we define a model that accepts a vector of parameters and returns data predictions. The function `model` is imported above from `TestModels`, but is presented below for illustration. In this simple example, the model returns the parameter inputs. In more substantive model, the returned value will be the model predictions.
 
 ```julia 
-model(parms) = parms 
+model(parms, args...; kwargs...) = parms 
 ```
 ## Pattern Function
 
 A second function categorizes the predicted data into a qualitative pattern. At minimum, the pattern function must recieve a data input. In this example, the pattern function `p_fun` is imported from `TestModels`. The function is presented below for illustration. `p_fun` requires the location (i.e. parameters) and `HyperCube` object, which contains  partition boundaries (which is the same for each dimension). `p_fun` categorizes `location` on each dimension and returns a vector, such as `[1,2,1]`, which indicates the data is in the partition that is 1 in the x axis, 2 on the y axis and 1 on the z axis. 
 
 ```julia
-function p_fun(location, hypercube::HyperCube)
+function p_fun(location, hypercube::HyperCube, args...; kwargs...)
         p_bounds = hypercube.p_bounds
         nb = length(p_bounds)
         nd = length(location)
@@ -100,8 +100,9 @@ The function `find_partitions` accepts the `model` function, the pattern functio
 ```julia
 results = find_partitions(
     model, 
-    x -> p_fun(x, hypercube), 
+    p_fun, 
     options
+    hypercube,
 )
 ```
 

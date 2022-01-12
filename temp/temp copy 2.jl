@@ -1,10 +1,11 @@
 cd(@__DIR__)
 using Pkg
-Pkg.activate("")
+Pkg.activate("..")
 using Revise, Distributions, ParameterSpacePartitions
 using ParameterSpacePartitions.TestModels
 using LinearAlgebra, Random, DataFrames, StatsPlots
 
+Random.seed!(54545)
 # dimensions of the hypbercue
 n_dims = 10
 # number of partitions
@@ -25,15 +26,19 @@ init_parms = map(_ -> sample(bounds), 1:n_start)
 options = Options(;
     radius = .4,
     bounds,
-    n_iters = 10_000,
+    n_iters = 10000,
     parallel = false,
-    init_parms
+    init_parms,
+    adapt_radius! = adapt!,
+   Δr = .001,
+   t_rate = .40,
 )
 
 results = find_partitions(
     model, 
-    x -> p_fun(x, hyperspheres), 
-    options
+    p_fun, 
+    options,
+    hyperspheres;
 )
 
 df = DataFrame(results)

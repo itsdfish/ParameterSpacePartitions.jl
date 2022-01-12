@@ -9,9 +9,11 @@ Performs parameter space partitioning.
 - `p_fun`: a function that that evaluates the qualitative data pattern 
 - `options`: a set of options for configuring the algorithm
 """
-function find_partitions(model, p_fun, options)
+function find_partitions(model, p_fun, options, args...; kwargs...)
+    _model = x -> model(x, args...; kwargs...)
+    _p_fun = x -> p_fun(x, args...; kwargs...)
     # evaluate data pattern for each proposal
-    patterns = options.p_eval(options.init_parms, model, p_fun, options)
+    patterns = options.p_eval(options.init_parms, _model, _p_fun, options)
     # initialize
     chains = initialize(options.init_parms, patterns, options)
     # add result type
@@ -22,7 +24,7 @@ function find_partitions(model, p_fun, options)
         # generate proposal for each chain
         proposals = map(c -> generate_proposal(c, options), chains)
         # evaluate data pattern for each proposal
-        patterns = options.p_eval(proposals, model, p_fun, options)
+        patterns = options.p_eval(proposals, _model, _p_fun, options)
         # accept or reject proposals 
         update_position!.(chains, proposals, patterns)
         # record accepted results and update chains
@@ -154,6 +156,17 @@ end
 
 is_new(all_patterns, pattern) = pattern ∉ all_patterns
 
-function no_adaption(chain, options)
+function no_adaption!(chain, options; kwargs...)
     return nothing
+end
+
+function adapt!(chain, options; t_rate, Δr, kwargs...)
+    n_trials = length(chain.acceptance)
+    mod(n_trials, 10) != 0 ? (return nothing) : nothing 
+    a_rate = mean(chain.acceptance)
+    d_rate = a_rate - t_rate
+    c = exp(d_rate * Δr)
+    chain.radius *= c
+    println("radius: ", chain.radius)
+    return nothing 
 end
