@@ -1,7 +1,7 @@
 name = "ParameterSpacePartitions"
 uuid = "64931d76-8770-46b0-8423-0a5d3a7d2d72"
 authors = ["itsdfish"]
-version = "0.3.1"
+version = "0.3.2"
 
 [deps]
 ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
