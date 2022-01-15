@@ -92,7 +92,7 @@ options = Options(;
     init_parms
 )
 ```
-It is also possible to pass a custom adaption function via the keyword `adaption_radius`. By default, the adaption function adjusts the radius to achieve a 40% acceptance rate. Additional information for configuring the adaption function can be found via the help feature:
+It is also possible to pass a custom adaption function via the keyword `adapt_radius!`. By default, the adaption function adjusts the radius to achieve a 40% acceptance rate. Additional information for configuring the default adaption function can be found via the help feature:
 
 ```julia
 ? adapt!
