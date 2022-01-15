@@ -160,13 +160,73 @@ function no_adaption!(chain, options; kwargs...)
     return nothing
 end
 
-function adapt!(chain, options; t_rate, Δr, kwargs...)
+"""
+    adapt!(
+        chain, 
+        options; 
+        t_rate = .30, 
+        λ = .20, 
+        trace_on = false,
+        max_past = 200, 
+        kwargs...
+    )
+
+Iteratively adapts the radius to achieve a target acceptance rate. The radius is adjusted according
+to the following factor `c`:
+
+```julia
+c = exp(λ * d_rate)
+```
+where `λ` is the adaption rate, and `d_rate` is the difference between the acceptance rate and target 
+acceptance rate.
+
+# Arguments
+
+- `chain`: a chain for exploring the parameter space
+- `options`: a set of options for configuring the algorithm
+
+# Keyword Arguments
+
+- `t_rate = .40`: target acceptance rate 
+- `λ = .20`: adaption rate 
+- `trace_on = false`: prints adaption information if true
+- `max_past = 200`: maximum past acceptance values considered in adaption
+- `kwargs...`: keyword arguments that are not processed
+"""
+function adapt!(
+        chain, 
+        options; 
+        t_rate = .40, 
+        λ = .20, 
+        trace_on = false,
+        max_past = 200, 
+        kwargs...
+    )
     n_trials = length(chain.acceptance)
-    mod(n_trials, 10) != 0 ? (return nothing) : nothing 
-    a_rate = mean(chain.acceptance)
+    # maximum past acceptance values considered
+    max_past = 200
+    # evaluate up to max_past previous acceptance values
+    start_idx = max(n_trials - max_past, 1)
+    # acceptance rate
+    a_rate = mean(@view chain.acceptance[start_idx:end])
+    # difference between acceptance and target rate
     d_rate = a_rate - t_rate
-    c = exp(d_rate * Δr)
+    # adaption factor 
+    c = exp(λ * d_rate)
+    # adapt radius  
     chain.radius *= c
-    println("radius: ", chain.radius)
+    # print trace
+    trace_on ? print_adapt(chain, d_rate, c) : nothing
     return nothing 
+end
+
+function print_adapt(chain, d_rate, c)
+    println(
+        "pattern: ", chain.pattern, 
+        " radius: ", round(chain.radius, digits=3), 
+        " d rate ", round(d_rate, digits = 3),
+        " adjustment factor ", round(c, digits = 3),
+    )
+    println(" ")
+    return nothing
 end

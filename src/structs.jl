@@ -5,7 +5,7 @@
         n_iters, 
         init_parms,
         parallel = false,
-        adapt_radius! = no_adaption!,
+        adapt_radius! = adapt!,
         kwargs...
     )
 
@@ -20,8 +20,8 @@ time of the function is 1 ms or greater.
 the parameter space
 - `n_iters`: number of iterations to perform 
 - `p_eval`: the function that evalues the model and pattern functions
-- `adapt_radius!=no_adaption`: a function in the form of f(chain, options) that adapts 
-the radius. no adaption is the default 
+- `adapt_radius!=adapt!`: a function in the form of `func(chain, options; kwargs...)` that adapts 
+the radius. 
 - `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case. 
 """
 @concrete struct Options
@@ -40,9 +40,10 @@ function Options(;
         n_iters, 
         init_parms,
         parallel = false,
-        adapt_radius! = no_adaption!,
+        adapt_radius! = adapt!,
         kwargs...
     )
+
     p_eval = parallel ? t_eval_patterns : eval_patterns
     _adapt_radius! = (x,y) -> adapt_radius!(x, y; kwargs...)
 
@@ -93,7 +94,7 @@ function Chain(parms, pattern, radius)
         length(parms),
         pattern, 
         radius,
-        Bool[]
+        [true]
     )
 end
 
