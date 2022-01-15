@@ -85,23 +85,30 @@ We can configure options to define and improve the performance of the algorithm.
 
 ```julia
 options = Options(;
-    radius = .20,
+    radius = .40,
     bounds,
-    n_iters = 100,
+    n_iters = 500,
     parallel = false,
     init_parms
 )
 ```
+It is also possible to pass a custom adaption function via the keyword `adaption_radius`. By default, the adaption function adjusts the radius to achieve a 40% acceptance rate. Additional information for configuring the adaption function can be found via the help feature:
+
+```julia
+? adapt!
+```
+
+
 ## Find Partitions 
 
 Now that the requisite functions and options have been specified, we can now explore the parameter space.
-The function `find_partitions` accepts the `model` function, the pattern function `p_fun`, the options object and returns the results.
+The function `find_partitions` accepts the `model` function, the pattern function `p_fun`, the options object, and additional arguments and keyword arguments for `p_fun`.
 
 ```julia
 results = find_partitions(
     model, 
     p_fun, 
-    options
+    options,
     hypercube,
 )
 ```
@@ -143,14 +150,14 @@ As shown below, the algorithm found all 64 partitions. In addition, the size of 
  Row │ pattern    p1_minimum  p1_maximum  p2_minimum  p2_maximum  p3_minimum  p3_maximum 
      │ Array…     Float64     Float64     Float64     Float64     Float64     Float64    
 ─────┼───────────────────────────────────────────────────────────────────────────────────
-   1 │ [1, 1, 1]    0.0         0.495153    0.0         0.499715    0.0         0.480579
-   2 │ [1, 1, 2]    0.0         0.480361    0.0         0.494112    0.53599     1.0
-   3 │ [1, 2, 1]    0.0         0.49594     0.516987    1.0         0.0         0.456862
-   4 │ [1, 2, 2]    0.0         0.487051    0.502842    1.0         0.500063    1.0
-   5 │ [2, 1, 1]    0.500143    0.932376    0.0         0.495744    0.0         0.498883
-   6 │ [2, 1, 2]    0.516421    1.0         0.0         0.497141    0.581155    0.942603
-   7 │ [2, 2, 1]    0.504149    1.0         0.539577    1.0         0.0         0.481075
-   8 │ [2, 2, 2]    0.518509    1.0         0.529488    1.0         0.503062    1.0
+   1 │ [1, 1, 1]    0.0         0.497357    0.0         0.498463    0.0         0.498483
+   2 │ [1, 1, 2]    0.0         0.499921    0.0         0.497982    0.507963    1.0
+   3 │ [1, 2, 1]    0.0         0.488883    0.507123    1.0         0.0         0.496436
+   4 │ [1, 2, 2]    0.0         0.495029    0.500056    1.0         0.520285    1.0
+   5 │ [2, 1, 1]    0.503028    1.0         0.0         0.49685     0.0         0.496929
+   6 │ [2, 1, 2]    0.500573    1.0         0.0         0.48709     0.502865    1.0
+   7 │ [2, 2, 1]    0.505885    1.0         0.500411    1.0         0.0         0.497511
+   8 │ [2, 2, 2]    0.504082    1.0         0.500305    1.0         0.503377    1.0
   ```
 
 ## Visualization
@@ -163,7 +170,7 @@ using GLMakie, ColorSchemes, StatsBase
 # transform pattern into integer id
 transform!(df, :pattern => denserank => :pattern_id)
 
-fig, ax, scat = scatter(
+scatter(
     df.p1,
     df.p2,
     df.p3, 
