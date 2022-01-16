@@ -10,11 +10,12 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 ThreadedIterables = "11d239b0-c0b9-11e8-1935-d5cfa53abb03"
 
 [compat]
 ConcreteStructs = "v0.2.3"
-Distributions = "v0.25.37"
+Distributions = "0.23.0,0.24.0,v0.25.37"
 Revise = "v3.3.1"
 SafeTestsets = "0.0.1"
 ThreadedIterables = "v0.2.1"

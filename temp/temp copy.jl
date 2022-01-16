@@ -1,14 +1,11 @@
 cd(@__DIR__)
 using Pkg
-Pkg.activate("")
-using Revise, Distributions, ParameterSpacePartitions
-using LinearAlgebra, Random, DataFrames, StatsPlots
-
-function p_fun(data, points)
-    distances = map(p -> norm(data .- p), points)
-    _,idx = findmin(distances)
-    return idx
-end
+Pkg.activate("..")
+using ParameterSpacePartitions
+using ParameterSpacePartitions.TestModels
+using Revise, Random, Distributions
+using DataFrames, LinearAlgebra
+#Random.seed!(2001)
 
 # dimensions of the hypbercue
 n_dims = 2
@@ -16,13 +13,11 @@ n_dims = 2
 n_part = 50
 # number of starting points
 n_start = 1
-#
+
 
 # partition boundaries
-points = [rand(2) for i in 1:n_part]
+polytopes = [Polytope(rand(n_dims)) for i in 1:n_part]
 bounds = fill((0, 1), n_dims)
-
-model(parms) = parms 
 
 sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 
@@ -33,13 +28,15 @@ options = Options(;
     bounds,
     n_iters = 500,
     parallel = false,
-    init_parms
+    init_parms,
+    λ = .2
 )
 
 results = find_partitions(
     model, 
-    x -> p_fun(x, points), 
-    options
+    p_fun, 
+    options,
+    polytopes
 )
 
 df = DataFrame(results)
@@ -48,6 +45,10 @@ transform!(
     :parms => identity => [:p1, :p2]
 )
 
+groups = groupby(df, :pattern)
+
+groups = groupby(df, :chain_id)
+mean_accept = combine(groups, :acceptance=>mean=>:mean)
 
 
 groups = groupby(df, :pattern)

@@ -1,5 +1,5 @@
 """
-    find_partitions(model, p_fun, options)
+    find_partitions(model, p_fun, options, args...; kwargs...)
 
 Performs parameter space partitioning.
 
@@ -8,6 +8,10 @@ Performs parameter space partitioning.
 - `model`: a model function that returns predictions given a vector of parameters 
 - `p_fun`: a function that that evaluates the qualitative data pattern 
 - `options`: a set of options for configuring the algorithm
+- `args...`: arguments passed to `model` and `p_fun`
+
+# Keywords 
+- `kwargs...`: keyword arguments passed to `model` and `p_fun`
 """
 function find_partitions(model, p_fun, options, args...; kwargs...)
     _model = x -> model(x, args...; kwargs...)
@@ -213,8 +217,10 @@ function adapt!(
     d_rate = a_rate - t_rate
     # adaption factor 
     c = exp(λ * d_rate)
+    # ensure that the radius does not grow too large
+    max_radius = minimum(options.bounds)[2] / 2
     # adapt radius  
-    chain.radius *= c
+    chain.radius = min(max_radius, chain.radius * c)
     # print trace
     trace_on ? print_adapt(chain, d_rate, c) : nothing
     return nothing 
@@ -230,3 +236,5 @@ function print_adapt(chain, d_rate, c)
     println(" ")
     return nothing
 end
+
+volume_hypersphere(d, r=1) = π^(d / 2) / gamma(1 + d / 2) * r^d

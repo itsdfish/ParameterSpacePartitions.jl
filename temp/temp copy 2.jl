@@ -5,15 +5,15 @@ using Revise, Distributions, ParameterSpacePartitions
 using ParameterSpacePartitions.TestModels
 using LinearAlgebra, Random, DataFrames, StatsPlots
 
-Random.seed!(54545)
+#Random.seed!(54545)
 # dimensions of the hypbercue
-n_dims = 10
+n_dims = 7
 # number of partitions
-n_obj = 100
+n_obj = 50
 # distribution of radii
-r_dist = () -> rand(Uniform(.2, .25))
+r_dist = () -> rand(Uniform(.15, .25))
 # number of starting points
-n_start = 1
+n_start = 10
 
 # partition boundaries
 hyperspheres = set_locations(r_dist, n_dims, n_obj)
@@ -24,14 +24,14 @@ sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 init_parms = map(_ -> sample(bounds), 1:n_start)
 
 options = Options(;
-    radius = .4,
+    radius = .15,
     bounds,
-    n_iters = 10000,
+    n_iters = 5000,
     parallel = false,
     init_parms,
-    adapt_radius! = adapt!,
-   Δr = .001,
-   t_rate = .40,
+    λ = .2,
+    t_rate = .40,
+    trace_on = false
 )
 
 results = find_partitions(
@@ -42,6 +42,9 @@ results = find_partitions(
 )
 
 df = DataFrame(results)
+
+groups = groupby(df, :chain_id)
+mean_accept = combine(groups, :acceptance=>mean=>:mean)
 
 
 # transform!(

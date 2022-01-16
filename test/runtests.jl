@@ -396,3 +396,31 @@ end
     @test mean(mean_accept.mean) ≈ t_rate atol = .03
     @test std(mean_accept.mean) < .05
 end
+
+@safetestset "Process New Patterns" begin
+    using ParameterSpacePartitions, Test
+    import ParameterSpacePartitions: process_new_patterns!, Chain, is_new
+
+    all_patterns = [[1,2],[1,3]]
+    patterns = [[1,2],[1,4]]
+
+    chains = [Chain([.3,.3], [1,2], .2),Chain([.3,.3], [1,3], .2)]
+    chains[1].acceptance[1] = false
+    chains[2].acceptance[1] = false
+
+    parms = [[.3,.4],[.3,.5]]
+    options = Options(;
+        radius = .2, 
+        bounds = [(0,1),(0,1)], 
+        n_iters = 100, 
+        init_parms = [[.2,.3]]
+    )
+
+    @test !is_new(all_patterns, patterns[1])
+    @test is_new(all_patterns, patterns[2])
+
+    process_new_patterns!(all_patterns, patterns, parms, chains, options)
+
+    @test length(chains) == 3
+    @test chains[3].pattern == [1,4]
+end

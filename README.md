@@ -1,3 +1,5 @@
+<img src="resources/psp_logo.png" alt="" width="550" height="180">
+
 # ParameterSpacePartitions
 
 Parameter space partitioning is a model assessment method for mapping regions of the parameter space to qualitative data patterns. Parameter space partitioning uses MCMC sampling to explore the parameter space. Each chain searches a region of the parameter space for a specific pattern. As the space is sampled, a new chain is created for each newly discovered pattern. On each iteration, a proposal is sampled uniformly from the surface of a hyperspere with the same number of dimensions as the parameter space. 
@@ -98,7 +100,6 @@ It is also possible to pass a custom adaption function via the keyword `adapt_ra
 ? adapt!
 ```
 
-
 ## Find Partitions 
 
 Now that the requisite functions and options have been specified, we can now explore the parameter space.
@@ -162,7 +163,8 @@ As shown below, the algorithm found all 64 partitions. In addition, the size of 
 
 ## Visualization
 
-The following code shows how to visualize the results. 
+The following code shows how to visualize the results. As expected, the cube is partitioned into 8
+color coded regions. 
 
 ```julia
 using GLMakie, ColorSchemes, StatsBase
