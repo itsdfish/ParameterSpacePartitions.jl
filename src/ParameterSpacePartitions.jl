@@ -3,7 +3,8 @@ module ParameterSpacePartitions
     using ThreadedIterables 
 
     export find_partitions,
-        adapt!
+        adapt!,
+        no_adaption!
 
     export Options,
         Results

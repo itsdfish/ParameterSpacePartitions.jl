@@ -314,7 +314,7 @@ end
     using ParameterSpacePartitions.TestModels
     using Test, Random, Distributions
     using DataFrames, LinearAlgebra
-    Random.seed!(2001)
+    Random.seed!(2002)
 
     # dimensions of the hypbercue
     n_dims = 5
@@ -333,12 +333,12 @@ end
     init_parms = map(_ -> sample(bounds), 1:n_start)
 
     options = Options(;
-        radius = 1.8,
+        radius = 1.6,
         bounds,
         n_iters = 500,
         parallel = false,
         init_parms,
-        λ = 0.0
+        adapt_radius! = no_adaption!
     )
 
     results = find_partitions(
@@ -365,7 +365,7 @@ end
     t_rate = .4 
 
     options = Options(;
-        radius = 1.8,
+        radius = 1.6,
         bounds,
         n_iters = 1000,
         parallel = false,
@@ -393,7 +393,7 @@ end
     groups = groupby(df, :chain_id)
     mean_accept = combine(groups, :acceptance=>mean=>:mean)
     # show that initial radius results in poor acceptance
-    @test mean(mean_accept.mean) ≈ t_rate atol = .03
+    @test mean(mean_accept.mean) ≈ t_rate atol = .04
     @test std(mean_accept.mean) < .05
 end
 
