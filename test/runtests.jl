@@ -424,3 +424,47 @@ end
     @test length(chains) == 3
     @test chains[3].pattern == [1,4]
 end
+
+@safetestset "update_position!" begin
+    using ParameterSpacePartitions, Test
+    import ParameterSpacePartitions: update_position!, Chain
+
+    chain = Chain([.3,.3], [1,2], .2)
+    proposal = [.2,.4]
+    pattern = [1,2]
+    update_position!(chain, proposal, pattern)
+
+    @test chain.parms == proposal
+    @test length(chain.acceptance) == 2
+    @test chain.acceptance[2] == true
+
+    chain = Chain([.3,.3], [1,2], .2)
+    proposal = [.2,.4]
+    pattern = [1,3]
+    update_position!(chain, proposal, pattern)
+
+    @test chain.parms == [.3,.3]
+    @test length(chain.acceptance) == 2
+    @test chain.acceptance[2] == false
+end
+
+
+@safetestset "adjust_parms!" begin
+    using ParameterSpacePartitions, Test
+    import ParameterSpacePartitions: adjust_parms!, Chain
+
+    bounds = [(0,1),(0,1)]
+    parms = [.5,.5]
+    adjust_parms!(parms, bounds)
+    @test parms == [.5,.5]
+
+    bounds = [(0,1),(0,1)]
+    parms = [.5,-1]
+    adjust_parms!(parms, bounds)
+    @test parms == [.5,.0]
+
+    bounds = [(0,1),(0,1)]
+    parms = [1.2,.5]
+    adjust_parms!(parms, bounds)
+    @test parms == [1.0,.50] 
+end

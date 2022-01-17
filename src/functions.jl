@@ -60,11 +60,35 @@ function update_results!(results, chains, iter)
 end
 
 """
+    t_eval_patterns(proposals, model, p_fun, options)
+
+Uses threading to generate patterns associated with a vector of proposals
+
+# Arguments
+
+- `proposals`: a vector of proposals to evaluate
+- `model`: a model function that returns predictions given a vector of parameters 
+- `p_fun`: a function that that evaluates the qualitative data pattern 
+- `options`: a set of options for configuring the algorithm
+
 """
 function t_eval_patterns(proposals, model, p_fun, options)
         return tmap(p -> p_fun(model(p)), proposals)
 end
 
+"""
+    eval_patterns(proposals, model, p_fun, options)
+
+Generates patterns associated with a vector of proposals
+
+# Arguments
+
+- `proposals`: a vector of proposals to evaluate
+- `model`: a model function that returns predictions given a vector of parameters 
+- `p_fun`: a function that that evaluates the qualitative data pattern 
+- `options`: a set of options for configuring the algorithm
+
+"""
 function eval_patterns(proposals, model, p_fun, options)
     return map(p -> p_fun(model(p)), proposals)
 end

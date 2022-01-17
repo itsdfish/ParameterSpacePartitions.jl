@@ -3,7 +3,7 @@ using Pkg
 Pkg.activate("..")
 using Revise, Distributions, ParameterSpacePartitions
 using ParameterSpacePartitions.TestModels
-using LinearAlgebra, Random, DataFrames, StatsPlots
+using LinearAlgebra, Random, DataFrames
 
 #Random.seed!(54545)
 # dimensions of the hypbercue
@@ -43,17 +43,11 @@ results = find_partitions(
 
 df = DataFrame(results)
 
+parm_names = Symbol.("p",1:n_dims)
+transform!(
+    df, 
+    :parms => identity => parm_names
+)
+
 groups = groupby(df, :chain_id)
 mean_accept = combine(groups, :acceptance=>mean=>:mean)
-
-
-# transform!(
-#     df, 
-#     :parms => identity => [:p1, :p2]
-# )
-
-
-
-# groups = groupby(df, :pattern)
-
-# @df df scatter(:p1, :p2, group=:pattern, leg=false)

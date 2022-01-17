@@ -128,9 +128,10 @@ To facilitate the analysis, we will convert the results to a `DataFrame` and des
 
 ```julia
 df = DataFrame(results)
+parm_names = Symbol.("p",1:n_dims)
 transform!(
     df, 
-    :parms => identity => [:p1, :p2, :p3]
+    :parms => identity => parm_names
 )
 ```
 
