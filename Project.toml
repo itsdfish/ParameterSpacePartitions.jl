@@ -18,6 +18,7 @@ ConcreteStructs = "v0.2.3"
 Distributions = "0.23.0,0.24.0,v0.25.37"
 Revise = "v3.3.1"
 SafeTestsets = "0.0.1"
+SpecialFunctions = "2"
 ThreadedIterables = "v0.2.1"
 julia = "1"
 
