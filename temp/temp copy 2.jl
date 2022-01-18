@@ -24,13 +24,14 @@ sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
 init_parms = map(_ -> sample(bounds), 1:n_start)
 
 options = Options(;
-    radius = .15,
+    radius = .25,
     bounds,
     n_iters = 5000,
     parallel = false,
     init_parms,
     λ = .2,
     t_rate = .40,
+    adapt_radius! = no_adaption!,
     trace_on = false
 )
 

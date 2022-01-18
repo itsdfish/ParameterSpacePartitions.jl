@@ -27,7 +27,7 @@ model(parms, args...; kwargs...) = parms
 ```
 ## Pattern Function
 
-A second function categorizes the predicted data into a qualitative pattern. At minimum, the pattern function must recieve a data input. In this example, the pattern function `p_fun` is imported from `TestModels`. The function is presented below for illustration. `p_fun` requires the location (i.e. parameters) and `HyperCube` object, which contains  partition boundaries (which is the same for each dimension). `p_fun` categorizes `location` on each dimension and returns a vector, such as `[1,2,1]`, which indicates the data is in the partition that is 1 in the x axis, 2 on the y axis and 1 on the z axis. 
+A second function categorizes the predicted data into a qualitative pattern. At minimum, the pattern function must recieve a data input. In this example, the pattern function `p_fun` is imported from `TestModels`. The function is presented below for illustration. `p_fun` requires the location (i.e. parameters) and `HyperCube` object, which contains  partition boundaries (which is the same for each dimension). `p_fun` categorizes `location` on each dimension and returns a vector representing a pattern. For example, the pattern `[1,2,1]` indicates the `location` is in the partition for which the x axis is 1, the y axis is 2, and the z axis is 1. 
 
 ```julia
 function p_fun(location, hypercube::HyperCube, args...; kwargs...)

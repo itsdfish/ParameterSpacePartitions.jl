@@ -11,6 +11,7 @@ Performs parameter space partitioning.
 - `args...`: arguments passed to `model` and `p_fun`
 
 # Keywords 
+
 - `kwargs...`: keyword arguments passed to `model` and `p_fun`
 """
 function find_partitions(model, p_fun, options, args...; kwargs...)
