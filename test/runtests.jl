@@ -468,3 +468,60 @@ end
     adjust_parms!(parms, bounds)
     @test parms == [1.0,.50] 
 end
+
+@safetestset "3D volume" begin
+    using Test, QHull, Random, Distributions, LinearAlgebra
+    using ParameterSpacePartitions: volume_ellipsoid, sample_ellipsoid_surface
+    Random.seed!(584)
+    n = 4
+    μ = fill(0.0, n)
+    
+    x = randn(n, n)
+    cov_mat = x' * x
+    fun = sample_ellipsoid_surface
+    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
+    points = reduce(vcat, transpose.(x))
+    
+    
+    v1 = volume_ellipsoid(n, cov_mat)
+    
+    hull = chull(points)
+    v2 = hull.volume 
+    
+    @test v1 ≈ v2 rtol = .03
+
+    x = randn(n, n)
+    cov_mat = x' * x
+    fun = sample_ellipsoid_surface
+    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
+    points = reduce(vcat, transpose.(x))
+    
+    
+    v1 = volume_ellipsoid(n, cov_mat)
+    
+    hull = chull(points)
+    v2 = hull.volume 
+    
+    @test v1 ≈ v2 rtol = .03
+end
+
+@safetestset "4D volume" begin
+    using Test, QHull, Random, Distributions, LinearAlgebra
+    using ParameterSpacePartitions: volume_ellipsoid, sample_ellipsoid_surface
+    Random.seed!(28805)
+    n = 4
+    μ = fill(0.0, n)
+    
+    x = randn(n, n)
+    cov_mat = x' * x
+    fun = sample_ellipsoid_surface
+    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
+    points = reduce(vcat, transpose.(x))
+    
+    v1 = volume_ellipsoid(n, cov_mat)
+    
+    hull = chull(points)
+    v2 = hull.volume 
+    
+    @test v1 ≈ v2 rtol = .03
+end
