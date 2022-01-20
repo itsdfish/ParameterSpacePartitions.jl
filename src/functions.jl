@@ -320,48 +320,53 @@ function log_vol_hypersphere1(n, r=1)
 end
 
 """
-    sample_ellipsoid(μ, n, cov_mat)
+    sample_ellipsoid(μ, n_dims, cov_mat)
 
 Samples a point uniformly from the interior of an ellipsoid 
 
 # Arguments
 
 - `μ`: mean of ellipsoid on each dimension  
-- `n`: the number of dimensions 
+- `n_dims`: the number of dimensions 
 - `cov_mat`: covariance matrix 
 """
-function sample_ellipsoid(μ, n, cov_mat)
-    x = random_position(rand(), n)
-    return μ .+ sqrt((n + 2) * cov_mat) * x
+function sample_ellipsoid(μ, n_dims, cov_mat)
+    x = random_position(rand(), n_dims)
+    return μ .+ sqrt((n_dims + 2) * cov_mat) * x
 end
 
 """
-    sample_ellipsoid_surface(μ, n, cov_mat)
+    sample_ellipsoid_surface(μ, n_dims, cov_mat)
 
 Samples a point uniformly from the surface of an ellipsoid 
 
 # Arguments
 
 - `μ`: mean of ellipsoid on each dimension  
-- `n`: the number of dimensions 
+- `n_dims`: the number of dimensions 
 - `cov_mat`: covariance matrix
 - `r=1`: radius of underlying unit hypersphere 
 """
-function sample_ellipsoid_surface(μ, n, cov_mat, r=1)
-    x = random_position(r, n)
-    return μ .+ sqrt((n + 2) * cov_mat) * x
+function sample_ellipsoid_surface(μ, n_dims, cov_mat, r=1)
+    x = random_position(r, n_dims)
+    return μ .+ sqrt((n_dims + 2) * cov_mat) * x
 end
 
-function bias_correction(model, p_fun, points, target, options, n_sim, args...; kwargs...)
+"""
+    bias_correction(model, p_fun, points, target, bounds, n_sim, args...; kwargs...)
+
+Uses the hit or miss technique to adjust volume estimates based on ellipsoids. 
+
+"""
+function bias_correction(model, p_fun, points, target, bounds, n_sim, args...; kwargs...)
     
-    μ = mean(points, dims=2)
+    μ = mean(points, dims=1)[:]
     cov_mat = cov(points)
     n = length(μ)
-    bounds = options.bounds
 
     _model = x -> model(x, args...; kwargs...)
     _p_fun = x -> p_fun(x, args...; kwargs...)
-    
+
     hits = 0
     for i in 1:n_sim
         parms = sample_ellipsoid(μ, n, cov_mat)
@@ -374,8 +379,7 @@ end
 function hit_or_miss(target, pattern, parms, bounds)
     if !in_bounds(parms, bounds)
         return 0
-    end
-    if target == pattern
+    elseif target == pattern
         return 1
     end
     return 0

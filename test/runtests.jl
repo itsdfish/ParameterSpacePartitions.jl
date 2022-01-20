@@ -448,7 +448,6 @@ end
     @test chain.acceptance[2] == false
 end
 
-
 @safetestset "adjust_parms!" begin
     using ParameterSpacePartitions, Test
     import ParameterSpacePartitions: adjust_parms!, Chain
@@ -482,7 +481,6 @@ end
     x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
     points = reduce(vcat, transpose.(x))
     
-    
     v1 = volume_ellipsoid(n, cov_mat)
     
     hull = chull(points)
@@ -495,7 +493,6 @@ end
     fun = sample_ellipsoid_surface
     x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
     points = reduce(vcat, transpose.(x))
-    
     
     v1 = volume_ellipsoid(n, cov_mat)
     

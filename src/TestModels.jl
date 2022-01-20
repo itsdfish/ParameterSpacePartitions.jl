@@ -4,11 +4,13 @@ module TestModels
 
     export p_fun, 
         model,
-        set_locations 
+        set_locations,
+        set_indices 
 
     export HyperCube,
         Polytope,
-        HyperSphere
+        HyperSphere,
+        OddShape
 
     """
         model(parms, args...; kwargs...) 
@@ -168,5 +170,83 @@ module TestModels
         end
         # invalid area (not in a hypersphere)
         return -100 
+    end
+
+"""
+        OddShape
+
+    An odd shape the is found by (1) initializing a shape at random partition and adding it to set of indices, (2)
+    selecting random indices from the set, (3) adding an ajecent index to the set of indices, and repeating 2-3.
+
+    # Fields 
+
+    - `indices`: a vector of vectors that represent the location of the odd shape
+    - `p_bounds`: the partition boundaries for each dimension
+    """
+    mutable struct OddShape{T1,T2}
+        indices::T1
+        p_bounds::T2
+    end
+    
+    """
+        set_locations(r_dist, n_dims, n_obj)
+    
+    Sets the location of `OddShape` within a unit hypercube
+    
+    # Arguments
+
+    - `n_dims`: the number of dimensions of the hypersphere
+    - `n_part`: number of partitions along a dimension 
+    - `n_cells`: the number of hyperspheres
+    """
+    function set_indices(n_dims, n_part, n_cells)
+        indices = Vector{Vector{Int}}()
+        index = rand(1:n_part, n_dims)
+        push!(indices, index)
+        for i in 1:(n_cells-1)
+            while not_valid(indices, index, n_part)
+                index = propose(indices)
+            end
+            push!(indices, index)
+        end
+        return indices
+    end
+
+    function not_valid(xs, x, n_part)
+        return (x ∈ xs) || any(x .< 1) || any(x .> n_part)
+    end
+
+    function propose(indices)
+        index = deepcopy(rand(indices))
+        i = rand(1:length(index))
+        index[i] += rand() ≤ .5 ? 1 : -1
+        return index
+    end
+
+    """
+        p_fun(location, shape::OddShape, args...; kwargs...)
+
+    Returns 1 if location is in OddShape and 0 otherwise.
+
+    # Arguments
+
+    - `location`: a proposed location in a unit hypercube
+    - `Oddshape`: an odd contiguous shape
+    """
+    function p_fun(location, shape::OddShape, args...; kwargs...)
+        bounds = shape.p_bounds
+        indices = shape.indices
+        n_dims = length(location)
+        n_b = length(bounds)
+        index = fill(0, n_dims)
+        for j in 1:n_dims
+            for i in 1:(n_b-1) 
+                if (location[j] ≥ bounds[i]) && (location[j] ≤ bounds[i+1])
+                    index[j] = i 
+                    continue
+                end
+            end
+        end
+        return index ∈ indices ? 1 : 0
     end
 end
