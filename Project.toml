@@ -17,6 +17,7 @@ ThreadedIterables = "11d239b0-c0b9-11e8-1935-d5cfa53abb03"
 [compat]
 ConcreteStructs = "v0.2.3"
 Distributions = "0.23.0,0.24.0,v0.25.37"
+QHull = "0.2"
 Revise = "v3.3.1"
 SafeTestsets = "0.0.1"
 SpecialFunctions = "2"
