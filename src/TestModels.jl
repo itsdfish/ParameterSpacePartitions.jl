@@ -186,6 +186,14 @@ module TestModels
     mutable struct OddShape{T1,T2}
         indices::T1
         p_bounds::T2
+        shape_ids::Vector{Int}
+        n_shapes::Int
+    end
+
+    function OddShape(indices, p_bounds, n_cells::Vector{Int})
+        shape_ids = vcat(fill.(1:length(n_cells), n_cells)...)
+        n_shapes = length(n_cells)
+        return OddShape(indices, p_bounds, shape_ids, n_shapes)
     end
     
     """
@@ -197,17 +205,20 @@ module TestModels
 
     - `n_dims`: the number of dimensions of the hypersphere
     - `n_part`: number of partitions along a dimension 
-    - `n_cells`: the number of hyperspheres
+    - `n_cells`: the number of cells per shape
     """
     function set_indices(n_dims, n_part, n_cells)
+        n_shapes = length(n_cells)
         indices = Vector{Vector{Int}}()
-        index = rand(1:n_part, n_dims)
-        push!(indices, index)
-        for i in 1:(n_cells-1)
-            while not_valid(indices, index, n_part)
-                index = propose(indices)
-            end
+        for s in 1:n_shapes
+            index = rand(1:n_part, n_dims)
             push!(indices, index)
+            for i in 1:(n_cells[s]-1)
+                while not_valid(indices, index, n_part)
+                    index = propose(indices)
+                end
+                push!(indices, index)
+            end
         end
         return indices
     end
@@ -236,9 +247,11 @@ module TestModels
     function p_fun(location, shape::OddShape, args...; kwargs...)
         bounds = shape.p_bounds
         indices = shape.indices
+        shape_ids = shape.shape_ids
         n_dims = length(location)
         n_b = length(bounds)
         index = fill(0, n_dims)
+
         for j in 1:n_dims
             for i in 1:(n_b-1) 
                 if (location[j] ≥ bounds[i]) && (location[j] ≤ bounds[i+1])
@@ -247,6 +260,16 @@ module TestModels
                 end
             end
         end
-        return index ∈ indices ? 1 : 0
+        return get_id(index, indices, shape_ids)
     end
+
+    function get_id(index, indices, shape_ids)
+        for i in 1:length(indices)
+            if indices[i] == index 
+                return shape_ids[i]
+            end
+        end
+        return 0
+    end
+
 end

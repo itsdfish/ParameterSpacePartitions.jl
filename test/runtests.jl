@@ -468,11 +468,11 @@ end
     @test parms == [1.0,.50] 
 end
 
-@safetestset "3D volume" begin
+@safetestset "2D Ellipsoid Volume" begin
     using Test, QHull, Random, Distributions, LinearAlgebra
     using ParameterSpacePartitions: volume_ellipsoid, sample_ellipsoid_surface
-    Random.seed!(584)
-    n = 4
+    Random.seed!(633)
+    n = 2
     μ = fill(0.0, n)
     
     x = randn(n, n)
@@ -502,7 +502,41 @@ end
     @test v1 ≈ v2 rtol = .03
 end
 
-@safetestset "4D volume" begin
+@safetestset "3D Ellipsoid Volume" begin
+    using Test, QHull, Random, Distributions, LinearAlgebra
+    using ParameterSpacePartitions: volume_ellipsoid, sample_ellipsoid_surface
+    Random.seed!(584)
+    n = 3
+    μ = fill(0.0, n)
+    
+    x = randn(n, n)
+    cov_mat = x' * x
+    fun = sample_ellipsoid_surface
+    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
+    points = reduce(vcat, transpose.(x))
+    
+    v1 = volume_ellipsoid(n, cov_mat)
+    
+    hull = chull(points)
+    v2 = hull.volume 
+    
+    @test v1 ≈ v2 rtol = .03
+
+    x = randn(n, n)
+    cov_mat = x' * x
+    fun = sample_ellipsoid_surface
+    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
+    points = reduce(vcat, transpose.(x))
+    
+    v1 = volume_ellipsoid(n, cov_mat)
+    
+    hull = chull(points)
+    v2 = hull.volume 
+    
+    @test v1 ≈ v2 rtol = .03
+end
+
+@safetestset "4D Ellipsoid Volume" begin
     using Test, QHull, Random, Distributions, LinearAlgebra
     using ParameterSpacePartitions: volume_ellipsoid, sample_ellipsoid_surface
     Random.seed!(28805)
@@ -521,4 +555,70 @@ end
     v2 = hull.volume 
     
     @test v1 ≈ v2 rtol = .03
+end
+
+@safetestset "3D Odd Shape Volume" begin
+
+    using Test, Distributions, ParameterSpacePartitions
+    using ParameterSpacePartitions.TestModels
+    using Random, DataFrames, StatsBase
+    include("volume_functions.jl")
+
+    Random.seed!(20015)
+
+    c = (
+        # number of shapes
+        n_shapes = 2,
+        # number of simulations for hit or miss 
+        n_sim = 10_000,
+        # number of dimensions 
+        n_dims = 3,
+        # number of partitions per dimension
+        n_part = 5,
+        # number of cells for each shapes
+        n_cells = [10,20],
+        # number of starting points for the algorithm
+        n_start = 1,
+    )
+
+    ratios = map(_ -> volume_sim(c), 1:10)
+
+    tv1 = c.n_cells[1] * (1 / c.n_part)^c.n_dims
+    tv2 = c.n_cells[2] * (1 / c.n_part)^c.n_dims
+    true_ratio = tv1 / tv2
+    ratio = mean(ratios)
+    @test ratio ≈ true_ratio rtol = .2
+end
+
+@safetestset "5D Odd Shape Volume" begin
+
+    using Test, Distributions, ParameterSpacePartitions
+    using ParameterSpacePartitions.TestModels
+    using Random, DataFrames, StatsBase
+    include("volume_functions.jl")
+
+    Random.seed!(8544)
+
+    c = (
+        # number of shapes
+        n_shapes = 2,
+        # number of simulations for hit or miss 
+        n_sim = 10_000,
+        # number of dimensions 
+        n_dims = 5,
+        # number of partitions per dimension
+        n_part = 5,
+        # number of cells for each shapes
+        n_cells = [10,20],
+        # number of starting points for the algorithm
+        n_start = 1,
+    )
+
+    ratios = map(_ -> volume_sim(c), 1:10)
+
+    tv1 = c.n_cells[1] * (1 / c.n_part)^c.n_dims
+    tv2 = c.n_cells[2] * (1 / c.n_part)^c.n_dims
+    true_ratio = tv1 / tv2
+    ratio = mean(ratios)
+    @test ratio ≈ true_ratio rtol = .5
 end

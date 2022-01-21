@@ -4,13 +4,16 @@ module ParameterSpacePartitions
 
     export find_partitions,
         adapt!,
-        no_adaption!
+        no_adaption!,
+        estimate_volume,
+        bias_correction
 
     export Options,
         Results
 
     include("structs.jl")
-    include("functions.jl")
+    include("sampler.jl")
+    include("volume.jl")
     include("TestModels.jl")
 
 end
