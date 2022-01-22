@@ -184,7 +184,7 @@ df_volume = combine(
 df_volume.volume = df_volume.x1 / sum(df_volume.x1)
 ```
 
-As expected, the volume percentage estimates are close to $\frac{1}{8} = .125$
+As expected, the volume percentage estimates are close to 1/8 = .125.
 
 ```julia 
 8×3 DataFrame
