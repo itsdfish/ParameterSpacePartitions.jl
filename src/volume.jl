@@ -1,5 +1,32 @@
 
-volume_hypersphere(d, r=1) = π^(d / 2) / gamma(1 + d / 2) * r^d
+volume_hypersphere(n, r=1) = π^(n / 2) / gamma(1 + n / 2) * r^n
+
+"""
+    log_vol_hypersphere(n, r=1)
+
+Computes the log volume of a hypersphere
+
+# Arguments
+- `n`: the number of dimensions
+- `r=1`: the radius
+"""
+log_vol_hypersphere(n; r=1) = (n / 2) * log(π) - loggamma(1 + n / 2) + n * log(r)
+
+"""
+    log_vol_ellipsiod(n, r=1)
+
+Computes the log volume of a hypersphere
+
+# Arguments
+- `n`: the number of dimensions
+- `cov_mat`: covariance matrix
+- `r=1`: the radius
+"""
+function log_vol_ellipsiod(n, cov_mat; r = 1)
+    vol = log_vol_hypersphere(n; r)
+    eig_val,_ = eigen(cov_mat)
+    return vol + .5 * sum(log(n + 2) .+ log.(eig_val))
+end
 
 """
     volume_ellipsoid(n, cov_mat, r=1)   
@@ -17,34 +44,7 @@ end
 
 volume_ellipsoid(cov_mat; r=1) = volume_ellipsoid(size(cov_mat, 2), cov_mat; r)
 
-"""
-    log_vol_hypersphere(n, r=1)
-
-Computes the log volume of a hypersphere
-
-# Arguments
-- `n`: the number of dimensions
-- `cov_mat`: covariance matrix
-- `r=1`: the radius
-"""
-function log_vol_ellipsiod(n, cov_mat; r = 1)
-    vol = log_vol_hypersphere(n; r)
-    eig_val,_ = eigen(cov_mat)
-    return vol + .5 * sum(log(n + 2) .+ log.(eig_val))
-end
-
 log_vol_ellipsiod(cov_mat; r=1) = log_vol_ellipsiod(size(cov_mat, 2), cov_mat; r)
-
-"""
-    log_vol_hypersphere(n, r=1)
-
-Computes the log volume of a hypersphere
-
-# Arguments
-- `n`: the number of dimensions
-- `r=1`: the radius
-"""
-log_vol_hypersphere(n; r=1) = (n / 2) * log(π) - loggamma(1 + n / 2) + n * log(r)
 
 """
     sample_ellipsoid(μ, n_dims, cov_mat)
@@ -177,9 +177,22 @@ function estimate_volume(
         n_sim,
         kwargs...
     )
-    
+
     cov_mat = cov(points)
     volume = volume_ellipsoid(cov_mat)
-    volume *= cf
+    
+    #volume *= cf
+
+
+
+
+
+
+
+
+
+
+
+    
     return volume
 end

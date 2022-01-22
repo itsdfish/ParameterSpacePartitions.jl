@@ -162,6 +162,46 @@ As shown below, the algorithm found all 64 partitions. In addition, the size of 
    8 │ [2, 2, 2]    0.504082    1.0         0.500305    1.0         0.503377    1.0
   ```
 
+## Volume Estimation
+
+The function `estimate_volume` approximates the volume of each region using an ellipsoid based
+on the covariance matrix of sampled points in the region. 
+
+```julia
+groups = groupby(df, :pattern)
+
+df_volume = combine(
+    groups,
+    x -> estimate_volume(
+        model,
+        p_fun, 
+        x,  
+        bounds,
+        hypercube; 
+        parm_names,
+    ),
+)
+
+df_volume.volume = df_volume.x1 / sum(df_volume.x1)
+```
+
+Although the absolute volume estimates tend to be biased, the percent volume in the last column below
+is more accurate. As expected, the volume percentage estimates are close to $\frac{1}{8} = .125$
+
+```julia 
+8×3 DataFrame
+ Row │ pattern    x1        volume   
+     │ Array…     Float64   Float64  
+─────┼───────────────────────────────
+   1 │ [1, 1, 1]  0.178323  0.114283
+   2 │ [2, 2, 1]  0.196807  0.126129
+   3 │ [1, 2, 1]  0.193654  0.124108
+   4 │ [2, 1, 1]  0.186231  0.119351
+   5 │ [2, 1, 2]  0.193475  0.123993
+   6 │ [1, 1, 2]  0.202615  0.129851
+   7 │ [2, 2, 2]  0.201932  0.129413
+   8 │ [1, 2, 2]  0.207331  0.132873
+```
 ## Visualization
 
 The following code shows how to visualize the results. As expected, the cube is partitioned into 8

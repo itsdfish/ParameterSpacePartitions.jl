@@ -1,5 +1,5 @@
 module ParameterSpacePartitions
-    using Distributions, ConcreteStructs, LinearAlgebra
+    using Requires, Distributions, ConcreteStructs, LinearAlgebra
     using ThreadedIterables, SpecialFunctions 
 
     export find_partitions,
@@ -11,6 +11,7 @@ module ParameterSpacePartitions
     export Options,
         Results
 
+    include("init.jl")
     include("structs.jl")
     include("sampler.jl")
     include("volume.jl")

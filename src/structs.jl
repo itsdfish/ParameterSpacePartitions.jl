@@ -18,6 +18,7 @@ time of the function is 1 ms or greater.
 - `radius`: the initial radius length for each chain 
 - `bounds`: a vector of tuples representing (lowerbound, upperbound) for each dimension in 
 the parameter space
+- `x_range`: the range of allowable values for each parameter
 - `n_iters`: number of iterations to perform 
 - `p_eval`: the function that evalues the model and pattern functions
 - `adapt_radius!=adapt!`: a function in the form of `func(chain, options; kwargs...)` that adapts 
@@ -28,6 +29,7 @@ the radius.
     parallel
     radius
     bounds
+    x_range
     n_iters
     p_eval
     adapt_radius!
@@ -46,11 +48,13 @@ function Options(;
 
     p_eval = parallel ? t_eval_patterns : eval_patterns
     _adapt_radius! = (x,y) -> adapt_radius!(x, y; kwargs...)
+    x_range = map(x -> x[2] - x[1], bounds)
 
     return Options(
         parallel,
         radius, 
-        bounds, 
+        bounds,
+        x_range, 
         n_iters, 
         p_eval, 
         _adapt_radius!,

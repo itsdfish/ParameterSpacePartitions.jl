@@ -107,7 +107,7 @@ to the current location of the `chain`.
 """
 function generate_proposal(chain::Chain, options)
     Δ = random_position(chain)
-    new_parms = chain.parms + Δ
+    new_parms = chain.parms + Δ .* options.x_range
     adjust_parms!(new_parms, options)
     return new_parms 
 end
@@ -219,21 +219,19 @@ acceptance rate.
 - `t_rate = .40`: target acceptance rate 
 - `λ = .20`: adaption rate 
 - `trace_on = false`: prints adaption information if true
-- `max_past = 200`: maximum past acceptance values considered in adaption
+- `max_past = 300`: maximum past acceptance values considered in adaption
 - `kwargs...`: keyword arguments that are not processed
 """
 function adapt!(
         chain, 
         options; 
         t_rate = .40, 
-        λ = .20, 
+        λ = .15, 
         trace_on = false,
-        max_past = 200, 
+        max_past = 300, 
         kwargs...
     )
     n_trials = length(chain.acceptance)
-    # maximum past acceptance values considered
-    max_past = 200
     # evaluate up to max_past previous acceptance values
     start_idx = max(n_trials - max_past, 1)
     # acceptance rate
@@ -243,7 +241,7 @@ function adapt!(
     # adaption factor 
     c = exp(λ * d_rate)
     # ensure that the radius does not grow too large
-    max_radius = minimum(options.bounds)[2] / 2
+    max_radius = minimum(options.bounds)[2] #/ 2
     # adapt radius  
     chain.radius = min(max_radius, chain.radius * c)
     # print trace
