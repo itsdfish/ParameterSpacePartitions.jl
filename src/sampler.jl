@@ -31,7 +31,7 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         # evaluate data pattern for each proposal
         patterns = options.p_eval(proposals, _model, _p_fun, options)
         # accept or reject proposals 
-        update_position!.(chains, proposals, patterns)
+        update_position!.(chains, proposals, patterns, options)
         # record accepted results and update chains
         update_results!(results, chains, iter)
         # add new chain if new pattern found
@@ -108,25 +108,25 @@ to the current location of the `chain`.
 function generate_proposal(chain::Chain, options)
     Δ = random_position(chain)
     new_parms = chain.parms + Δ .* options.x_range
-    adjust_parms!(new_parms, options)
+    #adjust_parms!(new_parms, options)
     return new_parms 
 end
 
 function generate_proposal(parms, options)
     Δ = random_position(options.radius, length(parms))
     new_parms = parms + Δ
-    adjust_parms!(new_parms, options)
+    #adjust_parms!(new_parms, options)
     return new_parms 
 end
 
-adjust_parms!(new_parms, options::Options) = adjust_parms!(new_parms, options.bounds)
-
-function adjust_parms!(parms, bounds)
-    map!((p,b) -> adjust_parm(p, b), parms, parms, bounds)
-    return nothing
+function in_bounds(parms::AbstractArray, bounds)
+    for i in 1:length(bounds)
+        !in_bounds(parms[i], bounds[i]) ? (return false) : nothing
+    end
+    return true
 end
 
-adjust_parm(p, b) = min(max(p, b[1]), b[2])
+in_bounds(p::Number, b) = p ≥ b[1] && p ≤ b[2] 
 
 function random_position(chain) 
     return random_position(chain.radius, chain.n_dims)
@@ -163,8 +163,8 @@ Updates the position of the chain if proposal is accepted
 - `proposal`: a proposed set of parameters for next location 
 - `pattern`: a data pattern associated with the proposal
 """
-function update_position!(chain, proposal, pattern)
-    if pattern == chain.pattern 
+function update_position!(chain, proposal, pattern, bounds)
+    if in_bounds(proposal, bounds) && pattern == chain.pattern 
         push!(chain.acceptance, true)
         chain.parms = proposal
     else
@@ -173,9 +173,14 @@ function update_position!(chain, proposal, pattern)
     return nothing
 end
 
+function update_position!(chain, proposal, pattern, options::Options) 
+    return update_position!(chain, proposal, pattern, options.bounds)
+end
+
 function process_new_patterns!(all_patterns, patterns, parms, chains, options)
     for p in 1:length(patterns) 
-        if !chains[p].acceptance[end] && is_new(all_patterns, patterns[p])
+        if !chains[p].acceptance[end] && is_new(all_patterns, patterns[p]) && 
+            in_bounds(parms[p], options.bounds)
             push!(all_patterns, patterns[p])
             push!(chains, Chain(parms[p], patterns[p], options.radius))
         end
@@ -225,7 +230,7 @@ acceptance rate.
 function adapt!(
         chain, 
         options; 
-        t_rate = .40, 
+        t_rate = .30, 
         λ = .15, 
         trace_on = false,
         max_past = 300, 
@@ -240,10 +245,8 @@ function adapt!(
     d_rate = a_rate - t_rate
     # adaption factor 
     c = exp(λ * d_rate)
-    # ensure that the radius does not grow too large
-    max_radius = minimum(options.bounds)[2] #/ 2
     # adapt radius  
-    chain.radius = min(max_radius, chain.radius * c)
+    chain.radius = min(1, chain.radius * c)
     # print trace
     trace_on ? print_adapt(chain, d_rate, c) : nothing
     return nothing 

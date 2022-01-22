@@ -87,10 +87,9 @@ We can configure options to define and improve the performance of the algorithm.
 
 ```julia
 options = Options(;
-    radius = .40,
+    radius = .10,
     bounds,
-    n_iters = 500,
-    parallel = false,
+    n_iters = 1000,
     init_parms
 )
 ```
@@ -149,23 +148,23 @@ As shown below, the algorithm found all 64 partitions. In addition, the size of 
 
 ```julia
 8×7 DataFrame
- Row │ pattern    p1_minimum  p1_maximum  p2_minimum  p2_maximum  p3_minimum  p3_maximum 
-     │ Array…     Float64     Float64     Float64     Float64     Float64     Float64    
-─────┼───────────────────────────────────────────────────────────────────────────────────
-   1 │ [1, 1, 1]    0.0         0.497357    0.0         0.498463    0.0         0.498483
-   2 │ [1, 1, 2]    0.0         0.499921    0.0         0.497982    0.507963    1.0
-   3 │ [1, 2, 1]    0.0         0.488883    0.507123    1.0         0.0         0.496436
-   4 │ [1, 2, 2]    0.0         0.495029    0.500056    1.0         0.520285    1.0
-   5 │ [2, 1, 1]    0.503028    1.0         0.0         0.49685     0.0         0.496929
-   6 │ [2, 1, 2]    0.500573    1.0         0.0         0.48709     0.502865    1.0
-   7 │ [2, 2, 1]    0.505885    1.0         0.500411    1.0         0.0         0.497511
-   8 │ [2, 2, 2]    0.504082    1.0         0.500305    1.0         0.503377    1.0
+ Row │ pattern    p1_minimum   p1_maximum  p2_minimum   p2_maximum  p3_minimum   p3_maximum 
+     │ Array…     Float64      Float64     Float64      Float64     Float64      Float64    
+─────┼──────────────────────────────────────────────────────────────────────────────────────
+   1 │ [1, 1, 1]  0.000790105    0.499221  0.00178227     0.499352  0.00264797     0.499415
+   2 │ [1, 1, 2]  0.00156466     0.49663   0.000787114    0.499246  0.505483       0.99685
+   3 │ [1, 2, 1]  0.00758579     0.497978  0.502377       0.996089  0.00252362     0.498483
+   4 │ [1, 2, 2]  0.00173871     0.496333  0.500671       0.990669  0.500801       0.997695
+   5 │ [2, 1, 1]  0.503185       0.993781  0.0100069      0.499649  0.00850261     0.499018
+   6 │ [2, 1, 2]  0.506343       0.997044  0.00253407     0.498     0.508688       0.999747
+   7 │ [2, 2, 1]  0.506839       0.999995  0.501297       0.999919  0.000102376    0.497726
+   8 │ [2, 2, 2]  0.507059       0.999908  0.502          0.995823  0.503872       0.995448
   ```
 
 ## Volume Estimation
 
 The function `estimate_volume` approximates the volume of each region using an ellipsoid based
-on the covariance matrix of sampled points in the region. 
+on the covariance of sampled points in the region. 
 
 ```julia
 groups = groupby(df, :pattern)
@@ -179,28 +178,27 @@ df_volume = combine(
         bounds,
         hypercube; 
         parm_names,
-    ),
+    )
 )
 
 df_volume.volume = df_volume.x1 / sum(df_volume.x1)
 ```
 
-Although the absolute volume estimates tend to be biased, the percent volume in the last column below
-is more accurate. As expected, the volume percentage estimates are close to $\frac{1}{8} = .125$
+As expected, the volume percentage estimates are close to $\frac{1}{8} = .125$
 
 ```julia 
 8×3 DataFrame
- Row │ pattern    x1        volume   
-     │ Array…     Float64   Float64  
-─────┼───────────────────────────────
-   1 │ [1, 1, 1]  0.178323  0.114283
-   2 │ [2, 2, 1]  0.196807  0.126129
-   3 │ [1, 2, 1]  0.193654  0.124108
-   4 │ [2, 1, 1]  0.186231  0.119351
-   5 │ [2, 1, 2]  0.193475  0.123993
-   6 │ [1, 1, 2]  0.202615  0.129851
-   7 │ [2, 2, 2]  0.201932  0.129413
-   8 │ [1, 2, 2]  0.207331  0.132873
+ Row │ pattern    x1         volume   
+     │ Array…     Float64    Float64  
+─────┼────────────────────────────────
+   1 │ [1, 1, 1]  0.106538   0.122964
+   2 │ [1, 2, 1]  0.113477   0.130974
+   3 │ [2, 1, 1]  0.103582   0.119553
+   4 │ [1, 2, 2]  0.103233   0.119151
+   5 │ [2, 2, 1]  0.10508    0.121282
+   6 │ [1, 1, 2]  0.116927   0.134956
+   7 │ [2, 1, 2]  0.119484   0.137908
+   8 │ [2, 2, 2]  0.0980879  0.113212
 ```
 ## Visualization
 

@@ -1,5 +1,87 @@
 using SafeTestsets
 
+@safetestset "Process New Patterns" begin
+    using ParameterSpacePartitions, Test
+    import ParameterSpacePartitions: process_new_patterns!, Chain, is_new
+
+    all_patterns = [[1,2],[1,3]]
+    patterns = [[1,2],[1,4]]
+
+    chains = [Chain([.3,.3], [1,2], .2),Chain([.3,.3], [1,3], .2)]
+    chains[1].acceptance[1] = false
+    chains[2].acceptance[1] = false
+
+    parms = [[.3,.4],[.3,.5]]
+    options = Options(;
+        radius = .2, 
+        bounds = [(0,1),(0,1)], 
+        n_iters = 100, 
+        init_parms = [[.2,.3]]
+    )
+
+    @test !is_new(all_patterns, patterns[1])
+    @test is_new(all_patterns, patterns[2])
+
+    process_new_patterns!(all_patterns, patterns, parms, chains, options)
+
+    @test length(chains) == 3
+    @test chains[3].pattern == [1,4]
+end
+
+@safetestset "in_bounds" begin
+    using ParameterSpacePartitions, Test
+    import ParameterSpacePartitions: in_bounds, Chain
+
+    bounds = [(0,1),(0,1)]
+    parms = [.5,.5]
+    in_bounds(parms, bounds)
+    @test in_bounds(parms, bounds)
+
+    bounds = [(0,1),(0,1)]
+    parms = [.5,-1]
+    @test !in_bounds(parms, bounds)
+
+    bounds = [(0,1),(0,1)]
+    parms = [1.2,.5]
+    @test !in_bounds(parms, bounds) 
+end
+
+@safetestset "update_position!" begin
+    using ParameterSpacePartitions
+    using Test
+    import ParameterSpacePartitions: update_position!, Chain
+
+    parms = [.4]
+    proposal = [.3]
+    pattern = [4,3]
+    bounds = [(0,1)]
+    chain = Chain(parms, pattern, .3)
+    update_position!(chain, proposal, pattern, bounds)
+    @test chain.parms == [.3]
+    @test chain.pattern == [4,3]
+    @test chain.acceptance[2] == true
+
+    parms = [.4]
+    proposal = [.3]
+    pattern = [4,3]
+    chain = Chain(parms, pattern, .3)
+    update_position!(chain, proposal, [4,5], bounds)
+    @test chain.parms == [.4]
+    @test chain.pattern == [4,3]
+    @test chain.acceptance[2] == false
+
+
+    parms = [.4]
+    proposal = [-.3]
+    pattern = [4,3]
+    chain = Chain(parms, pattern, .3)
+    update_position!(chain, proposal, pattern, bounds)
+    @test chain.parms == [.4]
+    @test chain.pattern == [4,3]
+    @test chain.acceptance[2] == false
+
+end
+
 @safetestset "Cube" begin
     using ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
@@ -204,28 +286,6 @@ end
     @test length(groups) == (n_obj + 1)
 end
 
-@safetestset "update_position!" begin
-    using ParameterSpacePartitions
-    using Test
-    import ParameterSpacePartitions: update_position!, Chain
-
-    parms = [.4]
-    proposal = [.3]
-    pattern = [4,3]
-    chain = Chain(parms, pattern, .3)
-    update_position!(chain, proposal, pattern)
-    @test chain.parms == [.3]
-    @test chain.pattern == [4,3]
-
-    parms = [.4]
-    proposal = [.3]
-    pattern = [4,3]
-    chain = Chain(parms, pattern, .3)
-    update_position!(chain, proposal, [4,5])
-    @test chain.parms == [.4]
-    @test chain.pattern == [4,3]
-end
-
 @safetestset "Adapt Radius 5D HyperCube" begin
     using ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
@@ -333,7 +393,7 @@ end
     init_parms = map(_ -> sample(bounds), 1:n_start)
 
     options = Options(;
-        radius = 1.6,
+        radius = .5,
         bounds,
         n_iters = 500,
         parallel = false,
@@ -365,7 +425,7 @@ end
     t_rate = .4 
 
     options = Options(;
-        radius = 1.6,
+        radius = 1.0,
         bounds,
         n_iters = 1000,
         parallel = false,
@@ -395,77 +455,6 @@ end
     # show that initial radius results in poor acceptance
     @test mean(mean_accept.mean) ≈ t_rate atol = .04
     @test std(mean_accept.mean) < .05
-end
-
-@safetestset "Process New Patterns" begin
-    using ParameterSpacePartitions, Test
-    import ParameterSpacePartitions: process_new_patterns!, Chain, is_new
-
-    all_patterns = [[1,2],[1,3]]
-    patterns = [[1,2],[1,4]]
-
-    chains = [Chain([.3,.3], [1,2], .2),Chain([.3,.3], [1,3], .2)]
-    chains[1].acceptance[1] = false
-    chains[2].acceptance[1] = false
-
-    parms = [[.3,.4],[.3,.5]]
-    options = Options(;
-        radius = .2, 
-        bounds = [(0,1),(0,1)], 
-        n_iters = 100, 
-        init_parms = [[.2,.3]]
-    )
-
-    @test !is_new(all_patterns, patterns[1])
-    @test is_new(all_patterns, patterns[2])
-
-    process_new_patterns!(all_patterns, patterns, parms, chains, options)
-
-    @test length(chains) == 3
-    @test chains[3].pattern == [1,4]
-end
-
-@safetestset "update_position!" begin
-    using ParameterSpacePartitions, Test
-    import ParameterSpacePartitions: update_position!, Chain
-
-    chain = Chain([.3,.3], [1,2], .2)
-    proposal = [.2,.4]
-    pattern = [1,2]
-    update_position!(chain, proposal, pattern)
-
-    @test chain.parms == proposal
-    @test length(chain.acceptance) == 2
-    @test chain.acceptance[2] == true
-
-    chain = Chain([.3,.3], [1,2], .2)
-    proposal = [.2,.4]
-    pattern = [1,3]
-    update_position!(chain, proposal, pattern)
-
-    @test chain.parms == [.3,.3]
-    @test length(chain.acceptance) == 2
-    @test chain.acceptance[2] == false
-end
-
-@safetestset "adjust_parms!" begin
-    using ParameterSpacePartitions, Test
-    import ParameterSpacePartitions: adjust_parms!, Chain
-
-    bounds = [(0,1),(0,1)]
-    parms = [.5,.5]
-    adjust_parms!(parms, bounds)
-    @test parms == [.5,.5]
-
-    bounds = [(0,1),(0,1)]
-    parms = [.5,-1]
-    adjust_parms!(parms, bounds)
-    @test parms == [.5,.0]
-
-    bounds = [(0,1),(0,1)]
-    parms = [1.2,.5]
-    adjust_parms!(parms, bounds)
-    @test parms == [1.0,.50] 
 end
 
 @safetestset "2D Ellipsoid Volume" begin
@@ -564,7 +553,7 @@ end
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(22015)
+    Random.seed!(2215)
 
     c = (
         # number of shapes
@@ -597,7 +586,7 @@ end
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(8544)
+    Random.seed!(844)
 
     c = (
         # number of shapes

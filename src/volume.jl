@@ -121,15 +121,6 @@ function hit_or_miss(target, pattern, parms, bounds)
     return 0
 end
 
-function in_bounds(parms::Vector{Float64}, bounds)
-    for i in 1:length(bounds)
-        !in_bounds(parms[i], bounds[i]) ? (return false) : nothing
-    end
-    return true
-end
-
-in_bounds(p::Float64, b) = p ≥ b[1] && p ≤ b[2] 
-
 """
     estimate_volume(
         model, 
@@ -180,19 +171,6 @@ function estimate_volume(
 
     cov_mat = cov(points)
     volume = volume_ellipsoid(cov_mat)
-    
-    #volume *= cf
-
-
-
-
-
-
-
-
-
-
-
-    
+    volume *= cf
     return volume
 end
