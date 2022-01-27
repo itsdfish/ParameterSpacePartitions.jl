@@ -6,7 +6,8 @@ module ParameterSpacePartitions
         adapt!,
         no_adaption!,
         estimate_volume,
-        bias_correction
+        bias_correction,
+        psp_slices
 
     export Options,
         Results

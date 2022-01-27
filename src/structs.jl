@@ -1,6 +1,6 @@
 """
     Options(;
-        radius, 
+        radius = .1, 
         bounds, 
         n_iters, 
         init_parms,
@@ -15,7 +15,7 @@ An object that holds configuration options for the MCMC sampler.
 
 - `parallel=false`: runs model on threads if true. A speed up is observed if the evaluation 
 time of the function is 1 ms or greater. 
-- `radius`: the initial radius length for each chain 
+- `radius = .10`: the initial radius length for each chain 
 - `bounds`: a vector of tuples representing (lowerbound, upperbound) for each dimension in 
 the parameter space
 - `x_range`: the range of allowable values for each parameter
@@ -34,10 +34,11 @@ the radius.
     p_eval
     adapt_radius!
     init_parms
+    n_dims
 end
 
 function Options(;
-        radius, 
+        radius = .10, 
         bounds, 
         n_iters, 
         init_parms,
@@ -49,6 +50,7 @@ function Options(;
     p_eval = parallel ? t_eval_patterns : eval_patterns
     _adapt_radius! = (x,y) -> adapt_radius!(x, y; kwargs...)
     x_range = map(x -> x[2] - x[1], bounds)
+    n_dims = length(bounds)
 
     return Options(
         parallel,
@@ -58,7 +60,8 @@ function Options(;
         n_iters, 
         p_eval, 
         _adapt_radius!,
-        init_parms
+        init_parms,
+        n_dims
     )
 end
 
@@ -122,7 +125,6 @@ An MCMC chain object.
 - `parms`: parameter vector 
 - `pattern`: target pattern of chain
 - `acceptance`: a Boolean vector indicating whether a proposal was accepted
-- ``
 """
 @concrete struct Results
     iter

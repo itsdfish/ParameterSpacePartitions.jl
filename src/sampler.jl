@@ -54,8 +54,8 @@ Adds chain location (parameters), iteration, chain id, and data pattern to a `Re
 - `iter`: current iteration of the algorithm
 """
 function update_results!(results, chains, iter)
-    for (i,c) in enumerate(chains)
-        push!(results, Results(i, c, iter))
+    for i in 1:length(chains)
+        push!(results, Results(i, chains[i], iter))
     end
     return nothing
 end
@@ -106,16 +106,9 @@ to the current location of the `chain`.
 - `options`: an `Options` object holding the configuration options for the algorithm
 """
 function generate_proposal(chain::Chain, options)
-    Δ = random_position(chain)
+    (;x_range,n_dims) = options
+    Δ = random_position(chain) * rand() ^(1 / n_dims)
     new_parms = chain.parms + Δ .* options.x_range
-    #adjust_parms!(new_parms, options)
-    return new_parms 
-end
-
-function generate_proposal(parms, options)
-    Δ = random_position(options.radius, length(parms))
-    new_parms = parms + Δ
-    #adjust_parms!(new_parms, options)
     return new_parms 
 end
 
@@ -198,10 +191,10 @@ end
     adapt!(
         chain, 
         options; 
-        t_rate = .30, 
-        λ = .20, 
+        t_rate = .25, 
+        λ = .025, 
         trace_on = false,
-        max_past = 200, 
+        max_past = 300, 
         kwargs...
     )
 
@@ -221,8 +214,8 @@ acceptance rate.
 
 # Keyword Arguments
 
-- `t_rate = .40`: target acceptance rate 
-- `λ = .20`: adaption rate 
+- `t_rate = .25`: target acceptance rate 
+- `λ = .025`: adaption rate 
 - `trace_on = false`: prints adaption information if true
 - `max_past = 300`: maximum past acceptance values considered in adaption
 - `kwargs...`: keyword arguments that are not processed
@@ -230,8 +223,8 @@ acceptance rate.
 function adapt!(
         chain, 
         options; 
-        t_rate = .30, 
-        λ = .15, 
+        t_rate = .25, 
+        λ = .025, 
         trace_on = false,
         max_past = 300, 
         kwargs...

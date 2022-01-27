@@ -94,7 +94,7 @@ end
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(2215)
+    Random.seed!(1495)
 
     c = (
         # number of shapes
@@ -127,7 +127,7 @@ end
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(844)
+    Random.seed!(82544)
 
     c = (
         # number of shapes
@@ -191,7 +191,7 @@ end
         n_iters = 10_000,
         parallel = false,
         init_parms,
-        λ = .2,
+        λ = .025,
         t_rate = .3,
     )
 

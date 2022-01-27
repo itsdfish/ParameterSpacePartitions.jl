@@ -208,7 +208,7 @@ function estimate_volume(
         parm_names,
         kwargs...
     )
-
+    
     cov_mat = cov(points)
     volume = volume_ellipsoid(cov_mat)
     volume *= cf

@@ -15,6 +15,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 ThreadedIterables = "11d239b0-c0b9-11e8-1935-d5cfa53abb03"
 
 [compat]
@@ -27,6 +28,7 @@ Requires = "1.3.0"
 Revise = "v3.3.1"
 SafeTestsets = "0.0.1"
 SpecialFunctions = "2"
+StatsPlots = "0.14.0"
 ThreadedIterables = "v0.2.1"
 julia = "1"
 

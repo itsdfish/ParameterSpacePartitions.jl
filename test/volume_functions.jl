@@ -13,9 +13,9 @@ function volume_sim(config)
     init_parms = map(_ -> sample(bounds), 1:n_start)
 
     options = Options(;
-        radius = .40,
+        radius = .10,
         bounds,
-        n_iters = 10_000,
+        n_iters = 20_000,
         init_parms
     )
 
