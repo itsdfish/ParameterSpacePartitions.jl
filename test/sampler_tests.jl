@@ -125,6 +125,7 @@ end
     )
 
     groups = groupby(df, :pattern)
+    length(groups)
     combine(groups, 
         :p1 => minimum, :p1 => maximum, 
         :p2 => minimum, :p2 => maximum,

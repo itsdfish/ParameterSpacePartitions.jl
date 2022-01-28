@@ -18,7 +18,7 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
     _model = x -> model(x, args...; kwargs...)
     _p_fun = x -> p_fun(x, args...; kwargs...)
     # evaluate data pattern for each proposal
-    patterns = options.p_eval(options.init_parms, _model, _p_fun, options)
+    patterns = options.p_eval(options.init_parms, _model, _p_fun)
     # initialize
     chains = initialize(options.init_parms, patterns, options)
     # add result type
@@ -29,7 +29,7 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         # generate proposal for each chain
         proposals = map(c -> generate_proposal(c, options), chains)
         # evaluate data pattern for each proposal
-        patterns = options.p_eval(proposals, _model, _p_fun, options)
+        patterns = options.p_eval(proposals, _model, _p_fun, options, chains)
         # accept or reject proposals 
         update_position!.(chains, proposals, patterns, options)
         # record accepted results and update chains
@@ -73,7 +73,7 @@ Uses threading to generate patterns associated with a vector of proposals
 - `options`: a set of options for configuring the algorithm
 
 """
-function t_eval_patterns(proposals, model, p_fun, options)
+function t_eval_patterns(proposals, model, p_fun, options, patterns)
     return tmap(p -> p_fun(model(p)), proposals)
 end
 
@@ -90,8 +90,17 @@ Generates patterns associated with a vector of proposals
 - `options`: a set of options for configuring the algorithm
 
 """
-function eval_patterns(proposals, model, p_fun, options)
+function eval_patterns(proposals, model, p_fun, options, chains)
+    (;bounds) = options
+    return map((c,p) -> eval_pattern(p_fun, model, bounds, c, p), chains, proposals)
+end
+
+function eval_patterns(proposals, model, p_fun)
     return map(p -> p_fun(model(p)), proposals)
+end
+
+function eval_pattern(p_fun, model, bounds, chain, parms)
+    return in_bounds(parms, bounds) ? p_fun(model(parms)) : chain.pattern
 end
 
 """

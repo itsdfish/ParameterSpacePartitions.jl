@@ -97,7 +97,7 @@ function psp_slice(
     options = Options(;
         radius = .10,
         bounds,
-        n_iters = 10_000,
+        n_iters = 5_000,
         init_parms,
         opt_set...
     )
