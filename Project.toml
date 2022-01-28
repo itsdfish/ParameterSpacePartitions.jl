@@ -1,7 +1,7 @@
 name = "ParameterSpacePartitions"
 uuid = "64931d76-8770-46b0-8423-0a5d3a7d2d72"
 authors = ["itsdfish"]
-version = "0.3.7"
+version = "0.3.8"
 
 [deps]
 ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
