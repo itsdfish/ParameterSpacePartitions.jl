@@ -73,7 +73,12 @@ Uses threading to generate patterns associated with a vector of proposals
 - `options`: a set of options for configuring the algorithm
 
 """
-function t_eval_patterns(proposals, model, p_fun, options, patterns)
+function t_eval_patterns(proposals, model, p_fun, options, chains)
+    (;bounds) = options
+    return tmap((c,p) -> eval_pattern(p_fun, model, bounds, c, p), chains, proposals)
+end
+
+function t_eval_patterns(proposals, model, p_fun)
     return tmap(p -> p_fun(model(p)), proposals)
 end
 

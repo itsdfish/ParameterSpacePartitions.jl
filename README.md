@@ -31,20 +31,20 @@ A second function categorizes the predicted data into a qualitative pattern. At 
 
 ```julia
 function p_fun(location, hypercube::HyperCube, args...; kwargs...)
-        p_bounds = hypercube.p_bounds
-        nb = length(p_bounds)
-        nd = length(location)
-        vals = fill(-100, nd)
-        for j in 1:nd
-            for i in 1:(nb-1) 
-                if (location[j] ≥ p_bounds[i]) && (location[j] ≤ p_bounds[i+1])
-                    vals[j] = i 
-                    continue
-                end
+    p_bounds = hypercube.p_bounds
+    nb = length(p_bounds)
+    nd = length(location)
+    vals = fill(-100, nd)
+    for j in 1:nd
+        for i in 1:(nb-1) 
+            if (location[j] ≥ p_bounds[i]) && (location[j] ≤ p_bounds[i+1])
+                vals[j] = i 
+                continue
             end
         end
-        return vals
     end
+    return vals
+end
 ```
 
 ## Model Configuration
