@@ -4,32 +4,20 @@
     Random.seed!(633)
     n = 2
     μ = fill(0.0, n)
-    
-    x = randn(n, n)
-    cov_mat = x' * x
-    fun = sample_ellipsoid_surface
-    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
-    points = reduce(vcat, transpose.(x))
-    
-    v1 = volume_ellipsoid(n, cov_mat)
-    
-    hull = chull(points)
-    v2 = hull.volume 
-    
-    @test v1 ≈ v2 rtol = .03
-
-    x = randn(n, n)
-    cov_mat = x' * x
-    fun = sample_ellipsoid_surface
-    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
-    points = reduce(vcat, transpose.(x))
-    
-    v1 = volume_ellipsoid(n, cov_mat)
-    
-    hull = chull(points)
-    v2 = hull.volume 
-    
-    @test v1 ≈ v2 rtol = .03
+    for _ in 1:5
+        x = randn(n, n)
+        cov_mat = x' * x
+        fun = sample_ellipsoid_surface
+        x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
+        points = reduce(vcat, transpose.(x))
+        
+        v1 = volume_ellipsoid(n, cov_mat)
+        
+        hull = chull(points)
+        v2 = hull.volume 
+        
+        @test v1 ≈ v2 rtol = .03
+    end
 end
 
 @safetestset "3D Ellipsoid Volume" begin
@@ -38,32 +26,20 @@ end
     Random.seed!(584)
     n = 3
     μ = fill(0.0, n)
-    
-    x = randn(n, n)
-    cov_mat = x' * x
-    fun = sample_ellipsoid_surface
-    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
-    points = reduce(vcat, transpose.(x))
-    
-    v1 = volume_ellipsoid(n, cov_mat)
-    
-    hull = chull(points)
-    v2 = hull.volume 
-    
-    @test v1 ≈ v2 rtol = .03
-
-    x = randn(n, n)
-    cov_mat = x' * x
-    fun = sample_ellipsoid_surface
-    x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
-    points = reduce(vcat, transpose.(x))
-    
-    v1 = volume_ellipsoid(n, cov_mat)
-    
-    hull = chull(points)
-    v2 = hull.volume 
-    
-    @test v1 ≈ v2 rtol = .03
+    for _ in 1:5
+        x = randn(n, n)
+        cov_mat = x' * x
+        fun = sample_ellipsoid_surface
+        x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
+        points = reduce(vcat, transpose.(x))
+        
+        v1 = volume_ellipsoid(n, cov_mat)
+        
+        hull = chull(points)
+        v2 = hull.volume 
+        
+        @test v1 ≈ v2 rtol = .03
+    end
 end
 
 @safetestset "4D Ellipsoid Volume" begin
