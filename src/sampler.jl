@@ -22,7 +22,7 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
     # initialize
     chains = initialize(options.init_parms, patterns, options)
     # add result type
-    results = map(c -> Results(c..., 0), enumerate(chains))
+    #results = map(c -> Results(c..., 0), enumerate(chains))
     # list of all observed patterns
     all_patterns = unique(patterns)
     for iter in 1:options.n_iters
@@ -33,13 +33,13 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         # accept or reject proposals 
         update_position!.(chains, proposals, patterns, options)
         # record accepted results and update chains
-        update_results!(results, chains, iter)
+        #update_results!(results, chains, iter)
         # add new chain if new pattern found
         process_new_patterns!(all_patterns, patterns, proposals, chains, options)
         # adjust the radius of each chain 
         options.adapt_radius!.(chains, options)
     end
-    return results
+    return to_df(chains, options)
 end
 
 """
@@ -156,7 +156,8 @@ end
 
 function initialize(init_parms, patterns, options)
     # option for unique
-    return Chain.(init_parms, patterns, options.radius)
+    ids = 1:length(init_parms)
+    return Chain.(ids, init_parms, patterns, options.radius)
 end
 
 """
@@ -174,7 +175,9 @@ function update_position!(chain, proposal, pattern, bounds)
     if in_bounds(proposal, bounds) && pattern == chain.pattern 
         push!(chain.acceptance, true)
         chain.parms = proposal
+        push!(chain.all_parms, chain.parms)
     else
+        push!(chain.all_parms, chain.parms)
         push!(chain.acceptance, false)
     end
     return nothing
@@ -189,7 +192,8 @@ function process_new_patterns!(all_patterns, patterns, parms, chains, options)
         if !chains[p].acceptance[end] && is_new(all_patterns, patterns[p]) && 
             in_bounds(parms[p], options.bounds)
             push!(all_patterns, patterns[p])
-            push!(chains, Chain(parms[p], patterns[p], options.radius))
+            next_id = maximum(c -> c.chain_id, chains) + 1
+            push!(chains, Chain(next_id, parms[p], patterns[p], options.radius))
         end
     end
     return nothing
@@ -268,4 +272,14 @@ function print_adapt(chain, d_rate, c)
     )
     println(" ")
     return nothing
+end
+
+function to_df(chains, options)
+    df = DataFrame(chains)
+    col_names = [:chain_id,:pattern]
+    return combine(
+        groupby(df, col_names), 
+        :all_parms => only => options.parm_names,
+        :acceptance => only => :acceptance
+    )
 end

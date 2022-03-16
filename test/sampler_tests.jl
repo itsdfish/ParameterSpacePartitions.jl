@@ -5,7 +5,7 @@
     all_patterns = [[1,2],[1,3]]
     patterns = [[1,2],[1,4]]
 
-    chains = [Chain([.3,.3], [1,2], .2),Chain([.3,.3], [1,3], .2)]
+    chains = [Chain(1, [.3,.3], [1,2], .2),Chain(2, [.3,.3], [1,3], .2)]
     chains[1].acceptance[1] = false
     chains[2].acceptance[1] = false
 
@@ -53,7 +53,7 @@ end
     proposal = [.3]
     pattern = [4,3]
     bounds = [(0,1)]
-    chain = Chain(parms, pattern, .3)
+    chain = Chain(1, parms, pattern, .3)
     update_position!(chain, proposal, pattern, bounds)
     @test chain.parms == [.3]
     @test chain.pattern == [4,3]
@@ -62,7 +62,7 @@ end
     parms = [.4]
     proposal = [.3]
     pattern = [4,3]
-    chain = Chain(parms, pattern, .3)
+    chain = Chain(1, parms, pattern, .3)
     update_position!(chain, proposal, [4,5], bounds)
     @test chain.parms == [.4]
     @test chain.pattern == [4,3]
@@ -72,7 +72,7 @@ end
     parms = [.4]
     proposal = [-.3]
     pattern = [4,3]
-    chain = Chain(parms, pattern, .3)
+    chain = Chain(1, parms, pattern, .3)
     update_position!(chain, proposal, pattern, bounds)
     @test chain.parms == [.4]
     @test chain.pattern == [4,3]
@@ -111,17 +111,11 @@ end
         init_parms
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3]
     )
 
     groups = groupby(df, :pattern)
@@ -168,17 +162,11 @@ end
         init_parms
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1,:p2,:p3,:p4,:p5]
     )
 
     groups = groupby(df, :pattern)
@@ -224,17 +212,11 @@ end
         init_parms
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         polytopes
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3, :p4, :p5]
     )
 
     groups = groupby(df, :pattern)
@@ -272,14 +254,13 @@ end
         λ = .05
     )
     
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hyperspheres
     )
     
-    df = DataFrame(results)
     groups = groupby(df, :pattern)
 
     @test length(groups) == (n_obj + 1)
@@ -321,17 +302,11 @@ end
         λ = .0
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1,:p2,:p3,:p4,:p5]
     )
 
     groups = groupby(df, :chain_id)
@@ -349,17 +324,11 @@ end
         λ = .2
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1,:p2,:p3,:p4,:p5]
     )
 
     groups = groupby(df, :chain_id)
@@ -400,17 +369,11 @@ end
         adapt_radius! = no_adaption!
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         polytopes
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3, :p4, :p5]
     )
 
     groups = groupby(df, :pattern)
@@ -433,17 +396,11 @@ end
         t_rate
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         polytopes
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3, :p4, :p5]
     )
 
     groups = groupby(df, :pattern)
