@@ -42,23 +42,23 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
     return to_df(chains, options)
 end
 
-"""
-    update_results!(results, chains, iter)
+# """
+#     update_results!(results, chains, iter)
 
-Adds chain location (parameters), iteration, chain id, and data pattern to a `Results` vector.
+# Adds chain location (parameters), iteration, chain id, and data pattern to a `Results` vector.
 
-# Arguments 
+# # Arguments 
 
-- `results`: a vector of `Results` objects
-- `chains`: a vector of chains used to explore the parameter space 
-- `iter`: current iteration of the algorithm
-"""
-function update_results!(results, chains, iter)
-    for i in 1:length(chains)
-        push!(results, Results(i, chains[i], iter))
-    end
-    return nothing
-end
+# - `results`: a vector of `Results` objects
+# - `chains`: a vector of chains used to explore the parameter space 
+# - `iter`: current iteration of the algorithm
+# """
+# function update_results!(results, chains, iter)
+#     for i in 1:length(chains)
+#         push!(results, Results(i, chains[i], iter))
+#     end
+#     return nothing
+# end
 
 """
     t_eval_patterns(proposals, model, p_fun, options)
@@ -71,7 +71,6 @@ Uses threading to generate patterns associated with a vector of proposals
 - `model`: a model function that returns predictions given a vector of parameters 
 - `p_fun`: a function that that evaluates the qualitative data pattern 
 - `options`: a set of options for configuring the algorithm
-
 """
 function t_eval_patterns(proposals, model, p_fun, options, chains)
     (;bounds) = options
