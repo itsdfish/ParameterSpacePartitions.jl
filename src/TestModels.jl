@@ -1,6 +1,6 @@
 module TestModels
 
-    using LinearAlgebra
+    using LinearAlgebra, ComponentArrays
 
     export p_fun, 
         model,
@@ -123,6 +123,11 @@ module TestModels
         dist = norm(v1.location - proposal)
         return dist ≤ v1.radius
     end
+
+    function in_contact(v1::HyperSphere, proposal::ComponentArray)
+        dist = norm(v1.location - proposal)
+        return dist ≤ v1.radius
+    end
     
     not_valid(v, vs)  = any(x -> in_contact(v, x), vs) || out_of_bounds(v)
     
@@ -155,13 +160,13 @@ module TestModels
     """
         p_fun(location, hyperspheres::Vector{HyperSphere}, args...; kwargs...)
 
-    Returns the qualitative data pattern for hypspheres embedded in a hypercube. -100 is
+    Returns the qualitative data pattern for hypspheres embedded in a hypersphere. -100 is
     returned if the proposed location is not in a hypsphere. Otherwise, an index of the hypersphere 
     in which the proposed location is contained. 
 
     # Arguments
 
-    - `location`: a proposed location in a unit hypercube
+    - `location`: a proposed location in a unit hypersphere
     - `hyperspheres`: a vector of `HyperSphere` objects
     """
     function p_fun(location, hyperspheres::Vector{HyperSphere}, args...; kwargs...)

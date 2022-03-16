@@ -7,7 +7,8 @@ module ParameterSpacePartitions
         no_adaption!,
         estimate_volume,
         bias_correction,
-        psp_slices
+        psp_slices,
+        intersects
 
     export Options,
         Results
@@ -16,6 +17,7 @@ module ParameterSpacePartitions
     include("structs.jl")
     include("sampler.jl")
     include("volume.jl")
+    include("intersection_test.jl")
     include("TestModels.jl")
 
 end
