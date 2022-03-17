@@ -139,8 +139,6 @@ end
 
     # dimensions of the hypbercue
     n_dims = 5
-    # number of partitions
-    n_part = 5
     # number of starting points
     n_start = 1
 

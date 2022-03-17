@@ -58,7 +58,8 @@ function psp_slices(
     v_range,
     sample,
     name_fun = x->x,
-    opt_set = (),  
+    opt_set = (),
+    plot_options = (),  
     kwargs...
     )
     plots = map(
@@ -72,6 +73,7 @@ function psp_slices(
             sample,
             name_fun,
             opt_set, 
+            plot_options,
             kwargs...
         ),
         v_range
@@ -89,6 +91,7 @@ function psp_slice(
     sample,
     name_fun = x->x,
     opt_set = (), 
+    plot_options = (),
     kwargs...
     ) 
 
@@ -99,22 +102,16 @@ function psp_slice(
         bounds,
         n_iters = 5_000,
         init_parms,
+        parm_names,
         opt_set...
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun,
         options;
         kwargs...,
         v_parm => v_val
-    )
-
-    df = DataFrame(results)
-
-    transform!(
-        df, 
-        :parms => identity => parm_names
     )
 
     transform!(df, :pattern => name_fun => :pattern_var)
@@ -129,6 +126,8 @@ function psp_slice(
         yaxis = string(parm_names[2]),
         title = string(v_parm, " = ", round(v_val, digits=3)),
         titlefontsize = 10,
+        palette = :tab10,
+        plot_options...
     )
     return p
 end

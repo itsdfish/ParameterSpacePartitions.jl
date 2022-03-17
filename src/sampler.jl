@@ -21,8 +21,6 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
     patterns = options.p_eval(options.init_parms, _model, _p_fun)
     # initialize
     chains = initialize(options.init_parms, patterns, options)
-    # add result type
-    #results = map(c -> Results(c..., 0), enumerate(chains))
     # list of all observed patterns
     all_patterns = unique(patterns)
     for iter in 1:options.n_iters
@@ -32,8 +30,6 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         patterns = options.p_eval(proposals, _model, _p_fun, options, chains)
         # accept or reject proposals 
         update_position!.(chains, proposals, patterns, options)
-        # record accepted results and update chains
-        #update_results!(results, chains, iter)
         # add new chain if new pattern found
         process_new_patterns!(all_patterns, patterns, proposals, chains, options)
         # adjust the radius of each chain 
@@ -41,24 +37,6 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
     end
     return to_df(chains, options)
 end
-
-# """
-#     update_results!(results, chains, iter)
-
-# Adds chain location (parameters), iteration, chain id, and data pattern to a `Results` vector.
-
-# # Arguments 
-
-# - `results`: a vector of `Results` objects
-# - `chains`: a vector of chains used to explore the parameter space 
-# - `iter`: current iteration of the algorithm
-# """
-# function update_results!(results, chains, iter)
-#     for i in 1:length(chains)
-#         push!(results, Results(i, chains[i], iter))
-#     end
-#     return nothing
-# end
 
 """
     t_eval_patterns(proposals, model, p_fun, options)
@@ -174,9 +152,11 @@ function update_position!(chain, proposal, pattern, bounds)
     if in_bounds(proposal, bounds) && pattern == chain.pattern 
         push!(chain.acceptance, true)
         chain.parms = proposal
+        push!(chain.radii, chain.radius)
         push!(chain.all_parms, chain.parms)
     else
         push!(chain.all_parms, chain.parms)
+        push!(chain.radii, chain.radius)
         push!(chain.acceptance, false)
     end
     return nothing
@@ -279,6 +259,7 @@ function to_df(chains, options)
     return combine(
         groupby(df, col_names), 
         :all_parms => only => options.parm_names,
-        :acceptance => only => :acceptance
+        :acceptance => only => :acceptance,
+        :radii => only => :radius
     )
 end
