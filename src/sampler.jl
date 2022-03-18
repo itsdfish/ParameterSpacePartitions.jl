@@ -34,7 +34,9 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         process_new_patterns!(all_patterns, patterns, proposals, chains, options)
         # adjust the radius of each chain 
         options.adapt_radius!.(chains, options)
+        options.merge_iter == iter ? make_unique!(chains, options) : nothing 
     end
+    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
     return to_df(chains, options)
 end
 

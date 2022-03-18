@@ -40,19 +40,51 @@ function intersects(μ1, μ2, cov1, cov2, c=2)
     end
 end
 
+"""
+    intersects(chain1, chain2, c=2)
 
+Tests whether two hyperellipsoids intersect. The test returns true if 
+the hyperellipsoids intersection and false otherwise. 
+
+# Arguments
+
+- `chain1`: chain object 
+- `chain2`: chain object
+- `c=2`: ellipse sclar
+"""
 function intersects(chain1, chain2, c=2)
     mat1 = to_matrix(chain1)
     mat2 = to_matrix(chain2)
     μ1 = mean(mat1, dims=1)[:]
     μ2 = mean(mat2, dims=1)[:]
     cov1 = cov(mat1)
+    add_variance!(cov1)
     cov2 = cov(mat2)
+    add_variance!(cov2)
     return intersects(μ1, μ2, cov1, cov2)
+end
+
+function add_variance!(x)
+    if any(x -> isapprox(x, 0), diag(x))
+        x[diagind(x)] .== eps()
+    end
+    return nothing 
 end
 
 to_matrix(x) = mapreduce(permutedims, vcat, x.all_parms)
 
+"""
+    get_group_indices(chains, chain_indices)
+
+Sorts chains of the same pattern into non-overlapping groups. The vector 
+[[1,2],[3,4]] indices chains 1 and 2 are located in region R₁ and chains 
+3 and 4 are located in region R₂.
+
+# Arguments
+
+- `chains`: a vector of chains 
+- `group`: a vector of indices corresponding to chains with the same pattern
+"""
 function get_group_indices(chains, chain_indices)
     # group chain indices according to region
     indices = Vector{Vector{Int}}()
@@ -95,6 +127,7 @@ function remove_redundant_chains!(chains, indices)
         push!(k_indices, i[1])
     end
     r_indices = setdiff(vcat(indices...), k_indices)
+    sort!(r_indices)
     deleteat!(chains, r_indices)
     return nothing
 end
@@ -111,14 +144,37 @@ function group_by_pattern(chains::T) where {T}
     return chain_indices
 end
 
-function make_unique!(chains)
+function make_unique!(chains, options)
     chain_indices = group_by_pattern(chains)
     all_indices = Vector{Vector{Int}}()
     for c in chain_indices
         temp = get_group_indices(chains, c)
         push!(all_indices, temp...)
     end
-        
+    merge_chains!(chains, all_indices, options)
     remove_redundant_chains!(chains, all_indices)
     return nothing
+end
+
+function merge_chains!(chains, indices, options) 
+    return merge_chains!(chains, indices, options.max_merge)
+end
+
+function merge_chains!(chains, indices, max_merge::Int)
+    max_merge == 0 ? (return nothing) : nothing 
+    for idx in indices 
+        length(idx) == 1 ? (continue) : nothing
+        n = min(length(idx), max_merge + 1)
+        for c in 2:n 
+            merge_chains!(chains[idx[1]], chains[idx[c]])
+        end
+    end
+    return nothing
+end
+
+function merge_chains!(chain1, chain2)
+    push!(chain1.all_parms, chain2.all_parms...)
+    push!(chain1.acceptance, chain2.acceptance...)
+    push!(chain1.radii, chain2.radii...)
+    return nothing 
 end

@@ -37,6 +37,8 @@ the radius.
     init_parms
     n_dims
     parm_names
+    merge_iter
+    max_merge
 end
 
 function Options(;
@@ -47,6 +49,8 @@ function Options(;
         parallel = false,
         adapt_radius! = adapt!,
         parm_names = nothing,
+        merge_iter = 0,
+        max_merge = 0,
         kwargs...
     )
 
@@ -66,7 +70,9 @@ function Options(;
         _adapt_radius!,
         init_parms,
         n_dims,
-        _parm_names
+        _parm_names,
+        merge_iter,
+        max_merge
     )
 end
 
