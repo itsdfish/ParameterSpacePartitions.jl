@@ -24,7 +24,10 @@ the parameter space
 - `adapt_radius!=adapt!`: a function in the form of `func(chain, options; kwargs...)` that adapts 
 the radius. 
 - `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case.
+- `n_dims`: number of dimensions in parameter space 
 - `parm_names`: a vector of symbols corresponding to parameter names. The default is [:p1,:p2,..:pn] 
+- `merge_iter`: the number of trials to run before merging chains with the same pattern located in the same region 
+- `max_merge`: maximum number of chains of the same pattern in the same location to merge 
 """
 @concrete struct Options
     parallel
@@ -97,7 +100,8 @@ An MCMC chain object.
 - `pattern`: the target pattern of the chain 
 - `radius`: the radius for the jump distribution
 - `acceptance`: a Boolean vector indicating whether a proposal was accepted
-- `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case. 
+- `all_parms`: a vector containing vectors of all sampled parameters 
+- `radii`: a vector of chain radii 
 """
 @concrete mutable struct Chain
     chain_id 

@@ -121,6 +121,19 @@ function get_group_indices(chains, chain_indices)
     return indices
 end
 
+"""
+    remove_redundant_chains!(chains, indices)
+
+Removes chains that have the same pattern and location in the parameter space. 
+For example, in the vector `indices` [[1,3],[34,50]], chains indexed in positions 1 and 3 have the same 
+pattern and location, as do chains indexed at positions 34 and 50. Only the first element of each sub-vector
+is retained (i.e., [1,50])
+
+# Arguments
+
+- `chains`: a vector containing all chain objects 
+- `indices`: a nested vector that maps chains of the same pattern and location to `chains`
+"""
 function remove_redundant_chains!(chains, indices)
     k_indices = Int[]
     for i in indices
@@ -132,7 +145,19 @@ function remove_redundant_chains!(chains, indices)
     return nothing
 end
 
-function group_by_pattern(chains::T) where {T}
+"""
+    group_by_pattern(chains)
+
+Groups chains according to pattern and returns a nested vector of chain indices. The vector 
+[[1,2],[3,4]] indices chains 1 and 2 are located in region R₁ and chains 
+3 and 4 are located in region R₂. 
+
+# Arguments
+
+- `chains`: a vector of all chains 
+
+"""
+function group_by_pattern(chains)
     patterns = map(c -> c.pattern, chains)
     u_patterns = unique(patterns)
     n_patterns = length(u_patterns)
@@ -144,6 +169,16 @@ function group_by_pattern(chains::T) where {T}
     return chain_indices
 end
 
+"""
+    make_unique!(chains, options)
+
+This function sorts chains by pattern and merges chains that are in the same region 
+
+# Arguments
+
+- `chains`: a vector of all chains 
+- `options`: an Options configuration object for the PSP algorithm
+"""
 function make_unique!(chains, options)
     chain_indices = group_by_pattern(chains)
     all_indices = Vector{Vector{Int}}()
@@ -160,6 +195,16 @@ function merge_chains!(chains, indices, options)
     return merge_chains!(chains, indices, options.max_merge)
 end
 
+"""
+    merge_chains!(chains, indices, max_merge::Int)  
+
+Merges a set of chains if they have the same pattern and their regions in the parameter space intersect.
+
+# Arguments
+
+- `chains`: a vector of chains with the same pattern 
+- `indices`: a vector of indices that map the position of each chain to a vector of all chains 
+"""
 function merge_chains!(chains, indices, max_merge::Int)
     max_merge == 0 ? (return nothing) : nothing 
     for idx in indices 
@@ -172,6 +217,16 @@ function merge_chains!(chains, indices, max_merge::Int)
     return nothing
 end
 
+"""
+    merge_chains!(chain1, chain2)
+
+Merges chain2 into chain1 on fields `all_parms`, `acceptance`, and `radii`.
+
+# Arguments
+
+- `chain1`: a chain object 
+- `chain2`: a chain object 
+"""
 function merge_chains!(chain1, chain2)
     push!(chain1.all_parms, chain2.all_parms...)
     push!(chain1.acceptance, chain2.acceptance...)

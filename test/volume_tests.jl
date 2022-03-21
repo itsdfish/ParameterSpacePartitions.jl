@@ -64,14 +64,12 @@ end
 end
 
 @safetestset "3D Odd Shape Volume" begin
-
     using Test, Distributions, ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    #Random.seed!(1778941)
-    Random.seed!(2213)
+    Random.seed!(1142)
 
     c = (
         # number of shapes
@@ -98,7 +96,6 @@ end
 end
 
 @safetestset "5D Odd Shape Volume" begin
-
     using Test, Distributions, ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
     using Random, DataFrames, StatsBase
@@ -166,7 +163,7 @@ end
         n_iters = 10_000,
         parallel = false,
         init_parms,
-        λ = .025,
+        λ = .05,
         t_rate = .3,
     )
 
@@ -205,7 +202,7 @@ end
         0.0848
         0.23185
     ]
-    true_df = DataFrame(pattern = 1:n_part, volume = true_volume)
+    true_df = DataFrame(pattern = 1:n_dims, volume = true_volume)
     abs_error = abs.(true_volume .- df_volume.volume)
     max_abs_error = maximum(abs_error)
     mean_abs_error = mean(abs_error)

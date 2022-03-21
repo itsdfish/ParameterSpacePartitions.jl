@@ -62,6 +62,7 @@ function psp_slices(
     v_range,
     sample,
     name_fun = x -> x,
+    color_fun = default_mapping,
     opt_set = (),
     plot_options = (), 
     n_start = 1, 
@@ -77,6 +78,7 @@ function psp_slices(
             x;
             sample,
             name_fun,
+            color_fun,
             opt_set, 
             plot_options,
             n_start,
@@ -96,6 +98,7 @@ function psp_slice(
     v_val;
     sample,
     name_fun = x -> x,
+    color_fun = default_mapping,
     opt_set = (), 
     plot_options = (),
     n_start = 1,
@@ -120,8 +123,9 @@ function psp_slice(
         kwargs...,
         v_parm => v_val
     )
-    sort!(df, :pattern)
     transform!(df, :pattern => name_fun => :pattern_var)
+    transform!(df, :pattern_var => color_fun => :color)
+    sort!(df, :color)
 
     p = @df df scatter(
         cols(parm_names[1]), 
@@ -134,7 +138,21 @@ function psp_slice(
         title = string(v_parm, " = ", round(v_val, digits=3)),
         titlefontsize = 10,
         palette = :tab10,
+        color = :color,
         plot_options...,
     )
     return p
+end
+
+function default_mapping(x)
+    v = fill(0, length(x))
+    u_vals = unique(x)
+    for (i,u) in enumerate(u_vals)
+        for j in 1:length(x)
+            if x[j] == u
+                v[j] = i 
+            end
+        end
+    end
+    return v 
 end

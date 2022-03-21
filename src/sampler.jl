@@ -41,7 +41,7 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
 end
 
 """
-    t_eval_patterns(proposals, model, p_fun, options)
+    t_eval_patterns(proposals, model, p_fun, options, chains)
 
 Uses threading to generate patterns associated with a vector of proposals
 
@@ -51,6 +51,7 @@ Uses threading to generate patterns associated with a vector of proposals
 - `model`: a model function that returns predictions given a vector of parameters 
 - `p_fun`: a function that that evaluates the qualitative data pattern 
 - `options`: a set of options for configuring the algorithm
+- `chains`: a vector of `Chain` objects
 """
 function t_eval_patterns(proposals, model, p_fun, options, chains)
     (;bounds) = options
@@ -62,7 +63,7 @@ function t_eval_patterns(proposals, model, p_fun)
 end
 
 """
-    eval_patterns(proposals, model, p_fun, options)
+    eval_patterns(proposals, model, p_fun, options, chains)
 
 Generates patterns associated with a vector of proposals
 
@@ -72,6 +73,7 @@ Generates patterns associated with a vector of proposals
 - `model`: a model function that returns predictions given a vector of parameters 
 - `p_fun`: a function that that evaluates the qualitative data pattern 
 - `options`: a set of options for configuring the algorithm
+- `chains`: a vector of `Chain` objects
 
 """
 function eval_patterns(proposals, model, p_fun, options, chains)
@@ -134,13 +136,12 @@ function random_position(radius, n)
 end
 
 function initialize(init_parms, patterns, options)
-    # option for unique
     ids = 1:length(init_parms)
     return Chain.(ids, init_parms, patterns, options.radius)
 end
 
 """
-    update_position!(chain, proposal, pattern)
+    update_position!(chain, proposal, pattern, bounds)
 
 Updates the position of the chain if proposal is accepted 
 
@@ -149,6 +150,7 @@ Updates the position of the chain if proposal is accepted
 - `chain`: a chain object for exploring the parameter space 
 - `proposal`: a proposed set of parameters for next location 
 - `pattern`: a data pattern associated with the proposal
+- `bounds`: a vector of tuples for lower and upper bounds of each parameter
 """
 function update_position!(chain, proposal, pattern, bounds)
     if in_bounds(proposal, bounds) && pattern == chain.pattern 
@@ -214,7 +216,7 @@ acceptance rate.
 # Keyword Arguments
 
 - `t_rate = .25`: target acceptance rate 
-- `λ = .025`: adaption rate 
+- `λ = .05`: adaption rate 
 - `trace_on = false`: prints adaption information if true
 - `max_past = 300`: maximum past acceptance values considered in adaption
 - `kwargs...`: keyword arguments that are not processed
@@ -223,7 +225,7 @@ function adapt!(
         chain, 
         options; 
         t_rate = .25, 
-        λ = .025, 
+        λ = .05, 
         trace_on = false,
         max_past = 300, 
         kwargs...
