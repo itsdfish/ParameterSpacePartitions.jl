@@ -20,6 +20,16 @@ function intersects(μ1, μ2, cov1, cov2, c=2)
      
     _Q2b = inv1' * cov2 * inv1
     Q2b = Symmetric(_Q2b)
+
+    if !isposdef(Q2b)
+        println("cov1")
+        cov1 ./= c^2
+        println(cov1)
+        println("cov2")
+        cov2 ./= c^2
+        println(cov2)
+    end
+
     if !issymmetric(_Q2b)
         ϵ = sum(abs.(_Q2b .- _Q2b')) / length(_Q2b)
         if ϵ > 1e-10
@@ -61,12 +71,20 @@ function intersects(chain1, chain2, c=2)
     add_variance!(cov1)
     cov2 = cov(mat2)
     add_variance!(cov2)
+    if !isposdef(cov1)
+        println("cov1")
+        println(cov1)
+    end
+    if !isposdef(cov2)
+        println("cov2")
+        println(cov2)
+    end
     return intersects(μ1, μ2, cov1, cov2)
 end
 
 function add_variance!(x)
-    if any(x -> isapprox(x, 0), diag(x))
-        x[diagind(x)] .== eps()
+    if any(x -> isapprox(x, 0; atol = 1e-10), diag(x))
+        x[diagind(x)] .= eps()
     end
     return nothing 
 end
@@ -104,6 +122,7 @@ function get_group_indices(chains, chain_indices)
             # (a stand-in for intersection test)
             if intersects(chains[indices[g][1]], chains[c])
                 push!(indices[g], c)
+                merge_chains!(chains[indices[g][1]], chains[c])
                 break
             end
             g += 1
@@ -169,6 +188,18 @@ function group_by_pattern(chains)
     return chain_indices
 end
 
+function remove_nonposdef!(chains)
+    n_chains = length(chains)
+    test_vals = fill(false, n_chains)
+    for c in 1:n_chains
+        mat = to_matrix(chains[c])
+        covar = cov(mat)
+        test_vals[c] = !isposdef(covar)
+    end
+    deleteat!(chains, test_vals)
+    return nothing
+end
+
 """
     make_unique!(chains, options)
 
@@ -180,13 +211,14 @@ This function sorts chains by pattern and merges chains that are in the same reg
 - `options`: an Options configuration object for the PSP algorithm
 """
 function make_unique!(chains, options)
+    remove_nonposdef!(chains)
     chain_indices = group_by_pattern(chains)
     all_indices = Vector{Vector{Int}}()
     for c in chain_indices
         temp = get_group_indices(chains, c)
         push!(all_indices, temp...)
     end
-    merge_chains!(chains, all_indices, options)
+    # merge_chains!(chains, all_indices, options)
     remove_redundant_chains!(chains, all_indices)
     return nothing
 end

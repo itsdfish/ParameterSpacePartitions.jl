@@ -17,11 +17,23 @@ Performs parameter space partitioning.
 function find_partitions(model, p_fun, options, args...; kwargs...)
     _model = x -> model(x, args...; kwargs...)
     _p_fun = x -> p_fun(x, args...; kwargs...)
-    # evaluate data pattern for each proposal
-    patterns = options.p_eval(options.init_parms, _model, _p_fun)
-    # initialize
-    chains = initialize(options.init_parms, patterns, options)
-    # list of all observed patterns
+
+    temp_chains = map(
+        p -> find_regions(
+            model, 
+            p_fun, 
+            options, 
+            p,
+            args...;
+            kwargs...
+        ),
+        options.init_parms
+    )
+
+    chains = vcat(temp_chains...)
+    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
+    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
+    patterns = map(c -> c.pattern, chains)
     all_patterns = unique(patterns)
     for iter in 1:options.n_iters
         # generate proposal for each chain
@@ -34,11 +46,52 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         process_new_patterns!(all_patterns, patterns, proposals, chains, options)
         # adjust the radius of each chain 
         options.adapt_radius!.(chains, options)
-        options.merge_iter == iter ? make_unique!(chains, options) : nothing 
     end
+    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
     options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
     return to_df(chains, options)
 end
+
+function find_regions(model, p_fun, options, init_parm, args...; kwargs...)
+    _model = x -> model(x, args...; kwargs...)
+    _p_fun = x -> p_fun(x, args...; kwargs...)
+
+    all_patterns = options.p_eval([init_parm], _model, _p_fun)
+    chains = initialize([init_parm], all_patterns, options)
+    options.merge_iter == 0 ? (return chains) : nothing
+    complete_chains = Vector{eltype(chains)}()
+    
+    while !isempty(chains)
+        # generate proposal for each chain
+        proposals = map(c -> generate_proposal(c, options), chains)
+        # evaluate data pattern for each proposal
+        patterns = options.p_eval(proposals, _model, _p_fun, options, chains)
+        # accept or reject proposals 
+        update_position!.(chains, proposals, patterns, options)
+        # add new chain if new pattern found
+        process_new_patterns!(all_patterns, patterns, proposals, chains, options)
+        # adjust the radius of each chain 
+        options.adapt_radius!.(chains, options)
+        remove_complete!(complete_chains, chains, options)
+    end
+    return complete_chains 
+end
+
+function remove_complete!(complete_chains, chains, options)
+    remove = fill(false, length(chains))
+    for (i,c) in enumerate(chains) 
+        if is_complete(c, options)
+            push!(complete_chains, c)
+            remove[i] = true            
+        end
+    end
+    deleteat!(chains, remove)
+    return nothing  
+end
+
+function is_complete(chain, options)
+    return length(chain.all_parms) == options.merge_iter ? true : false 
+end 
 
 """
     t_eval_patterns(proposals, model, p_fun, options, chains)
@@ -136,7 +189,11 @@ function random_position(radius, n)
 end
 
 function initialize(init_parms, patterns, options)
-    ids = 1:length(init_parms)
+    options.last_id += 1
+    last_id = options.last_id
+    n_start = length(init_parms)
+    ids = last_id:(last_id + n_start - 1)
+    options.last_id += (n_start - 1)
     return Chain.(ids, init_parms, patterns, options.radius)
 end
 
@@ -175,8 +232,8 @@ function process_new_patterns!(all_patterns, patterns, parms, chains, options)
         if !chains[p].acceptance[end] && is_new(all_patterns, patterns[p]) && 
             in_bounds(parms[p], options.bounds)
             push!(all_patterns, patterns[p])
-            next_id = maximum(c -> c.chain_id, chains) + 1
-            push!(chains, Chain(next_id, parms[p], patterns[p], options.radius))
+            options.last_id += 1
+            push!(chains, Chain(options.last_id, parms[p], patterns[p], options.radius))
         end
     end
     return nothing
@@ -225,7 +282,7 @@ function adapt!(
         chain, 
         options; 
         t_rate = .25, 
-        λ = .05, 
+        λ = .025, 
         trace_on = false,
         max_past = 300, 
         kwargs...

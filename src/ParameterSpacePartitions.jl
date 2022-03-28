@@ -1,6 +1,7 @@
 module ParameterSpacePartitions
     using Requires, Distributions, ConcreteStructs, LinearAlgebra
-    using ThreadedIterables, SpecialFunctions, ComponentArrays 
+    using ThreadedIterables, SpecialFunctions, ComponentArrays
+    #using ProgressMeter 
 
     export find_partitions,
         adapt!,

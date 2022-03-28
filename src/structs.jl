@@ -27,9 +27,8 @@ the radius.
 - `n_dims`: number of dimensions in parameter space 
 - `parm_names`: a vector of symbols corresponding to parameter names. The default is [:p1,:p2,..:pn] 
 - `merge_iter`: the number of trials to run before merging chains with the same pattern located in the same region 
-- `max_merge`: maximum number of chains of the same pattern in the same location to merge 
 """
-@concrete struct Options
+@concrete mutable struct Options
     parallel
     radius
     bounds
@@ -41,7 +40,7 @@ the radius.
     n_dims
     parm_names
     merge_iter
-    max_merge
+    last_id
 end
 
 function Options(;
@@ -53,7 +52,6 @@ function Options(;
         adapt_radius! = adapt!,
         parm_names = nothing,
         merge_iter = 0,
-        max_merge = 0,
         kwargs...
     )
 
@@ -75,7 +73,7 @@ function Options(;
         n_dims,
         _parm_names,
         merge_iter,
-        max_merge
+        0
     )
 end
 
