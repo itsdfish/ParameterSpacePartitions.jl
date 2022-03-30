@@ -69,7 +69,7 @@ end
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(1142)
+    Random.seed!(1282)
 
     c = (
         # number of shapes
@@ -101,7 +101,7 @@ end
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(30892)
+    Random.seed!(8541)
 
     c = (
         # number of shapes
@@ -160,11 +160,9 @@ end
     options = Options(;
         radius = .1,
         bounds,
-        n_iters = 10_000,
-        parallel = false,
+        n_iters = 3_000,
         init_parms,
-        λ = .05,
-        t_rate = .3,
+        t_rate = .2,
     )
 
     df = find_partitions(
@@ -180,16 +178,13 @@ end
     groups = groupby(df, :pattern)
     parm_names = options.parm_names
 
-    df_volume = combine(
-        groups,
-        x -> estimate_volume(
-            model,
-            p_fun, 
-            x,  
-            bounds,
-            polytopes; 
-            parm_names,
-        )
+    df_volume = estimate_volume(
+        model,
+        p_fun, 
+        groups,  
+        bounds,
+        polytopes; 
+        parm_names,
     )
 
     df_volume.volume = df_volume.x1 / sum(df_volume.x1)

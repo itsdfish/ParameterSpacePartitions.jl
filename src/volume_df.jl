@@ -107,7 +107,7 @@ function estimate_volume(
     bounds,  
     args...;
     n_sim = 10_000,
-    show_progress = true,
+    show_progress = false,
     parm_names,
     kwargs...
     )

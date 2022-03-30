@@ -26,7 +26,7 @@ the radius.
 - `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case.
 - `n_dims`: number of dimensions in parameter space 
 - `parm_names`: a vector of symbols corresponding to parameter names. The default is [:p1,:p2,..:pn] 
-- `merge_iter`: the number of trials to run before merging chains with the same pattern located in the same region 
+- `add_iters`: the number of trials to run after merging chains with the same pattern located in the same region 
 """
 @concrete mutable struct Options
     parallel
@@ -39,19 +39,19 @@ the radius.
     init_parms
     n_dims
     parm_names
-    merge_iter
+    add_iters
     last_id
 end
 
 function Options(;
         radius = .10, 
         bounds, 
-        n_iters, 
+        n_iters = default_n_iter(bounds), 
         init_parms,
         parallel = false,
         adapt_radius! = adapt!,
         parm_names = nothing,
-        merge_iter = 0,
+        add_iters = 0,
         kwargs...
     )
 
@@ -72,10 +72,12 @@ function Options(;
         init_parms,
         n_dims,
         _parm_names,
-        merge_iter,
-        0
+        add_iters,
+        0,
     )
 end
+
+default_n_iter(b) = Int(round(200 * 6 * 1.2^length(b)))
 
 Broadcast.broadcastable(x::Options) = Ref(x)
 
@@ -110,6 +112,10 @@ An MCMC chain object.
     acceptance
     all_parms
     radii 
+    level
+    λ
+    n_accept
+    n_attempt
 end
 
 function Chain(id, parms, pattern, radius) 
@@ -121,6 +127,10 @@ function Chain(id, parms, pattern, radius)
         radius,
         [true],
         [parms],
-        [radius]
+        [radius],
+        0,
+        0.0,
+        1,
+        1
     )
 end

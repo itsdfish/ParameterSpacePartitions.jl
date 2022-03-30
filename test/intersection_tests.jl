@@ -104,14 +104,6 @@
 
         indices = map(c -> get_group_indices(chains, c), c_indices)
         indices = vcat(indices...)
-
-        merge_chains!(chains, indices, 2)
-        @test length(chains[1].all_parms) == 202
-        @test length(chains[2].all_parms) == 101
-        @test length(chains[3].all_parms) == 101
-        @test length(chains[4].all_parms) == 202
-        @test length(chains[5].all_parms) == 101
-
         remove_redundant_chains!(chains, indices)
 
         @test length(chains) == 3

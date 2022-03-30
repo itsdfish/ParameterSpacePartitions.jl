@@ -218,34 +218,7 @@ function make_unique!(chains, options)
         temp = get_group_indices(chains, c)
         push!(all_indices, temp...)
     end
-    # merge_chains!(chains, all_indices, options)
     remove_redundant_chains!(chains, all_indices)
-    return nothing
-end
-
-function merge_chains!(chains, indices, options) 
-    return merge_chains!(chains, indices, options.max_merge)
-end
-
-"""
-    merge_chains!(chains, indices, max_merge::Int)  
-
-Merges a set of chains if they have the same pattern and their regions in the parameter space intersect.
-
-# Arguments
-
-- `chains`: a vector of chains with the same pattern 
-- `indices`: a vector of indices that map the position of each chain to a vector of all chains 
-"""
-function merge_chains!(chains, indices, max_merge::Int)
-    max_merge == 0 ? (return nothing) : nothing 
-    for idx in indices 
-        length(idx) == 1 ? (continue) : nothing
-        n = min(length(idx), max_merge + 1)
-        for c in 2:n 
-            merge_chains!(chains[idx[1]], chains[idx[c]])
-        end
-    end
     return nothing
 end
 

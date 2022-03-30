@@ -31,13 +31,14 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
     )
 
     chains = vcat(temp_chains...)
-    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
-    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
+    n_init = length(options.init_parms)
+    n_init > 1 ? make_unique!(chains, options) : nothing
+    n_init > 1 ? make_unique!(chains, options) : nothing
     patterns = map(c -> c.pattern, chains)
     all_patterns = unique(patterns)
-    for iter in 1:options.n_iters
+    for iter in 1:options.add_iters
         # generate proposal for each chain
-        proposals = map(c -> generate_proposal(c, options), chains)
+        proposals = map(c -> propose(c, options), chains)
         # evaluate data pattern for each proposal
         patterns = options.p_eval(proposals, _model, _p_fun, options, chains)
         # accept or reject proposals 
@@ -47,8 +48,8 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         # adjust the radius of each chain 
         options.adapt_radius!.(chains, options)
     end
-    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
-    options.merge_iter ≠ 0 ? make_unique!(chains, options) : nothing
+    n_init > 1 ? make_unique!(chains, options) : nothing
+    n_init > 1 ? make_unique!(chains, options) : nothing
     return to_df(chains, options)
 end
 
@@ -58,12 +59,12 @@ function find_regions(model, p_fun, options, init_parm, args...; kwargs...)
 
     all_patterns = options.p_eval([init_parm], _model, _p_fun)
     chains = initialize([init_parm], all_patterns, options)
-    options.merge_iter == 0 ? (return chains) : nothing
+    #options.n_ == 0 ? (return chains) : nothing
     complete_chains = Vector{eltype(chains)}()
     
     while !isempty(chains)
         # generate proposal for each chain
-        proposals = map(c -> generate_proposal(c, options), chains)
+        proposals = map(c -> propose(c, options), chains)
         # evaluate data pattern for each proposal
         patterns = options.p_eval(proposals, _model, _p_fun, options, chains)
         # accept or reject proposals 
@@ -90,7 +91,10 @@ function remove_complete!(complete_chains, chains, options)
 end
 
 function is_complete(chain, options)
-    return length(chain.all_parms) == options.merge_iter ? true : false 
+    if (chain.level == 2) && (chain.n_attempt == options.n_iters)
+        return true
+    end
+    return false 
 end 
 
 """
@@ -143,7 +147,7 @@ function eval_pattern(p_fun, model, bounds, chain, parms)
 end
 
 """
-    generate_proposal(chain::Chain, options)
+    propose(chain::Chain, options)
 
 Generates a proposal adding a random sample from the surface of a hypersphere
 to the current location of the `chain`.
@@ -153,7 +157,7 @@ to the current location of the `chain`.
 - `chain`: a chain for exploring the parameter space
 - `options`: an `Options` object holding the configuration options for the algorithm
 """
-function generate_proposal(chain::Chain, options)
+function propose(chain::Chain, options)
     (;x_range,n_dims) = options
     Δ = random_position(chain) * rand() ^(1 / n_dims)
     new_parms = chain.parms + Δ .* options.x_range
@@ -210,8 +214,10 @@ Updates the position of the chain if proposal is accepted
 - `bounds`: a vector of tuples for lower and upper bounds of each parameter
 """
 function update_position!(chain, proposal, pattern, bounds)
+    chain.n_attempt += 1
     if in_bounds(proposal, bounds) && pattern == chain.pattern 
         push!(chain.acceptance, true)
+        chain.n_accept += 1
         chain.parms = proposal
         push!(chain.radii, chain.radius)
         push!(chain.all_parms, chain.parms)
@@ -246,7 +252,7 @@ function no_adaption!(chain, options; kwargs...)
 end
 
 """
-    adapt!(
+    exp_adapt!(
         chain, 
         options; 
         t_rate = .25, 
@@ -278,7 +284,7 @@ acceptance rate.
 - `max_past = 300`: maximum past acceptance values considered in adaption
 - `kwargs...`: keyword arguments that are not processed
 """
-function adapt!(
+function exp_adapt!(
         chain, 
         options; 
         t_rate = .25, 
@@ -301,6 +307,113 @@ function adapt!(
     # print trace
     trace_on ? print_adapt(chain, d_rate, c) : nothing
     return nothing 
+end
+
+"""
+    adapt!(
+        chain, 
+        options; 
+        t_rate = .20, 
+        kwargs...
+    )
+
+Iteratively adapts the radius to achieve a target acceptance rate. The radius is adjusted according
+to the following factor `c`:
+
+```julia
+c = exp(λ * d_rate)
+```
+where `λ` is the adaption rate, and `d_rate` is the difference between the acceptance rate and target 
+acceptance rate.
+
+# Arguments
+
+- `chain`: a chain for exploring the parameter space
+- `options`: a set of options for configuring the algorithm
+
+# Keyword Arguments
+
+- `t_rate = .20`: target acceptance rate 
+- `kwargs...`: keyword arguments that are not processed
+"""
+function adapt!(
+    chain, 
+    options; 
+    t_rate = .20, 
+    kwargs...
+)
+    chain.level == 2 ? (return nothing) : nothing
+    n_dims = length(options.bounds)
+    n_attempt = chain.n_attempt  
+    λ = chain.λ
+    if chain.level == 0
+        n = ceil(100 * 1.2^n_dims)
+        if mod(n_attempt, n) == 0
+            a_rate = chain.n_accept / n
+            chain.n_accept = 0
+            if a_rate < (t_rate - .08)
+                if λ > 0
+                    λ -= .5
+                    chain.level = 1
+                    chain.n_attempt = 0
+                else
+                    λ -= 1.0
+                end
+            elseif (a_rate ≥ (t_rate - .08)) && (a_rate < (t_rate + .16))
+                chain.level = 1
+                chain.n_attempt = 0
+            elseif a_rate ≥ (t_rate + .16)
+                if  λ < 0 
+                    λ += .5
+                    chain.level = 1
+                    chain.n_attempt = 0
+                else
+                    λ += 1
+                end 
+            end
+        end
+    elseif chain.level == 1
+        n = ceil(200 * 1.2^n_dims)
+        v = n_attempt / n
+        if mod(n_attempt, n) == 0
+            a_rate = chain.n_accept / n
+            chain.n_accept = 0
+            if a_rate < (t_rate - .05)
+                λ = λ - .25 / ceil(v / 2)
+                if v == 4
+                    chain.level = 2
+                    chain.n_attempt = 0
+                end
+            elseif (a_rate ≥ (t_rate - .05)) && (a_rate < (t_rate - .01))
+                λ -= .125
+                chain.level = 2
+                chain.n_attempt = 0
+            elseif (a_rate ≥ (t_rate - .01)) && (a_rate < (t_rate + .04))
+                chain.level = 2
+                chain.n_attempt = 0
+            elseif (a_rate ≥ (t_rate + .04)) && (a_rate < (t_rate + .10))
+                λ += .125
+                chain.level = 2
+                chain.n_attempt = 0
+            elseif a_rate > (t_rate + .10)
+                λ = λ + .25 / ceil(v / 2)
+                if v == 4
+                    chain.level = 2
+                    chain.n_attempt = 0
+                end
+            end
+        end
+    end
+    chain.radius = options.radius * 2^λ
+    chain.λ = λ
+    return nothing 
+end
+
+function accept_rate(chain, n_trials::Int, n::Int)
+    m = div(n_trials, n)
+    lb = (m - 1) * n + 1
+    ub = m * n 
+    return mean(@view chain.accept_rate[lb:ub])
 end
 
 function print_adapt(chain, d_rate, c)
