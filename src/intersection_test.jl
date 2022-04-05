@@ -89,7 +89,7 @@ function add_variance!(x)
     return nothing 
 end
 
-to_matrix(x) = mapreduce(permutedims, vcat, x.all_parms)
+to_matrix(x) = reduce(vcat, transpose.(x.all_parms))
 
 """
     get_group_indices(chains, chain_indices)
@@ -174,7 +174,6 @@ Groups chains according to pattern and returns a nested vector of chain indices.
 # Arguments
 
 - `chains`: a vector of all chains 
-
 """
 function group_by_pattern(chains)
     patterns = map(c -> c.pattern, chains)
@@ -201,7 +200,7 @@ function remove_nonposdef!(chains)
 end
 
 """
-    make_unique!(chains, options)
+    make_unique!(chains, options; timer=nothing, show_time=false)
 
 This function sorts chains by pattern and merges chains that are in the same region 
 
@@ -209,18 +208,31 @@ This function sorts chains by pattern and merges chains that are in the same reg
 
 - `chains`: a vector of all chains 
 - `options`: an Options configuration object for the PSP algorithm
+
+# Keywords 
+
+- `timer`: monitors time 
+- `show_time=false`: shows time if true 
 """
-function make_unique!(chains, options)
+function make_unique!(chains, options; timer=nothing, show_timer=false)
+    for iter in 1:2 
+        _make_unique(chains, options; iter, timer, show_timer)
+    end 
+    return nothing 
+end
+
+function _make_unique(chains, options; iter=0, timer=nothing, show_timer = false)
     remove_nonposdef!(chains)
     chain_indices = group_by_pattern(chains)
     all_indices = Vector{Vector{Int}}()
     for c in chain_indices
         temp = get_group_indices(chains, c)
         push!(all_indices, temp...)
+        show_timer ? next!(timer; showvalues=show_values(iter)) : nothing 
     end
     remove_redundant_chains!(chains, all_indices)
     return nothing
-end
+end 
 
 """
     merge_chains!(chain1, chain2)

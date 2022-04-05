@@ -1,5 +1,5 @@
 """
-    find_partitions(model, p_fun, options, args...; kwargs...)
+    find_partitions(model, p_fun, options, args...; show_timer=false, kwargs...)
 
 Performs parameter space partitioning.
 
@@ -12,31 +12,40 @@ Performs parameter space partitioning.
 
 # Keywords 
 
+- `show_timer=false`: displays timer and progress bar if true
 - `kwargs...`: keyword arguments passed to `model` and `p_fun`
 """
-function find_partitions(model, p_fun, options, args...; kwargs...)
+function find_partitions(model, p_fun, options, args...; show_timer=false, kwargs...)
     _model = x -> model(x, args...; kwargs...)
     _p_fun = x -> p_fun(x, args...; kwargs...)
 
+    (;init_parms,add_iters) = options
+    n_init = length(init_parms)
+
+
+    timer = ProgressUnknown("Finding Regions:", spinner=true)
     temp_chains = map(
         p -> find_regions(
             model, 
             p_fun, 
             options, 
-            p,
+            p[2],
             args...;
+            timer,
+            show_timer,
+            start_num = p[1],
             kwargs...
         ),
-        options.init_parms
+        enumerate(init_parms)
     )
 
+    timer = ProgressUnknown("Merging Chains:", spinner=true)
     chains = vcat(temp_chains...)
-    n_init = length(options.init_parms)
-    n_init > 1 ? make_unique!(chains, options) : nothing
-    n_init > 1 ? make_unique!(chains, options) : nothing
+    n_init > 1 ? make_unique!(chains, options; timer, show_timer) : nothing
     patterns = map(c -> c.pattern, chains)
     all_patterns = unique(patterns)
-    for iter in 1:options.add_iters
+
+    for iter in 1:add_iters
         # generate proposal for each chain
         proposals = map(c -> propose(c, options), chains)
         # evaluate data pattern for each proposal
@@ -48,20 +57,31 @@ function find_partitions(model, p_fun, options, args...; kwargs...)
         # adjust the radius of each chain 
         options.adapt_radius!.(chains, options)
     end
-    n_init > 1 ? make_unique!(chains, options) : nothing
-    n_init > 1 ? make_unique!(chains, options) : nothing
+    n_init  > 1 && add_iters > 1 ? make_unique!(chains, options; timer, show_timer) : nothing
+    finish!(timer)
     return to_df(chains, options)
 end
 
-function find_regions(model, p_fun, options, init_parm, args...; kwargs...)
+show_values(iter) = () -> [(:iter,iter),]
+
+function find_regions(
+    model, 
+    p_fun, 
+    options, 
+    init_parm, 
+    args...; 
+    timer = nothing, 
+    show_timer = false, 
+    start_num = 0,
+    kwargs...
+    )
+
     _model = x -> model(x, args...; kwargs...)
     _p_fun = x -> p_fun(x, args...; kwargs...)
 
     all_patterns = options.p_eval([init_parm], _model, _p_fun)
     chains = initialize([init_parm], all_patterns, options)
-    #options.n_ == 0 ? (return chains) : nothing
     complete_chains = Vector{eltype(chains)}()
-    
     while !isempty(chains)
         # generate proposal for each chain
         proposals = map(c -> propose(c, options), chains)
@@ -74,6 +94,7 @@ function find_regions(model, p_fun, options, init_parm, args...; kwargs...)
         # adjust the radius of each chain 
         options.adapt_radius!.(chains, options)
         remove_complete!(complete_chains, chains, options)
+        show_timer ? next!(timer; showvalues=show_values(start_num)) : nothing 
     end
     return complete_chains 
 end

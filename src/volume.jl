@@ -129,7 +129,7 @@ function bias_correction(
     bounds, 
     args...; 
     parm_names = Symbol.("p", 1:size(points,2)),
-    n_sim=10_000, 
+    n_sim = 10_000, 
     kwargs...
     )
     
