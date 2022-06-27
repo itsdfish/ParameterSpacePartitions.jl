@@ -77,7 +77,9 @@ function Options(;
     )
 end
 
-default_n_iter(b) = Int(round(200 * 6 * 1.2^length(b)))
+default_n_iter(b::Int) = Int(round(200 * 6 * 1.2^b))
+default_n_iter(b) = default_n_iter(length(b))
+
 
 Broadcast.broadcastable(x::Options) = Ref(x)
 

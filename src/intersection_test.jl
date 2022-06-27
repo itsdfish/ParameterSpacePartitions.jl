@@ -119,7 +119,6 @@ function get_group_indices(chains, chain_indices)
         while g ≤ n_groups
             # if chain c matches region index in group g, 
             # push c into index group g
-            # (a stand-in for intersection test)
             if intersects(chains[indices[g][1]], chains[c])
                 push!(indices[g], c)
                 merge_chains!(chains[indices[g][1]], chains[c])
