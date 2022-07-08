@@ -73,5 +73,43 @@
             @test intersects(μ₁, μ₂, Σ₁, Σ₂) == false
         end
     end 
+
+    @safetestset "remove redundant chains" begin
+        using ParameterSpacePartitions, Test, LinearAlgebra
+        using ParameterSpacePartitions: Chain
+        using ParameterSpacePartitions: intersects, remove_redundant_chains!
+        using ParameterSpacePartitions: get_group_indices, group_by_pattern
+        using ParameterSpacePartitions: merge_chains!
+        using Statistics
+        
+        chains = [
+            Chain(1, [.1,.3], 1, 1),
+            Chain(2, [.1,.3,], 1, 1),
+            Chain(3, [.1,.3,], 1, 1),
+            Chain(4, [.1,.3,], 2, 1),
+            Chain(5, [.1,.3,], 2, 1),
+        
+        ]
+        points = [rand(2) for _ in 1:100]
+        push!(chains[1].all_parms, points...)
+        push!(chains[2].all_parms, points...)
+        points = [rand(2) .+ 2 for _ in 1:100]
+        push!(chains[3].all_parms, points...)
+        push!(chains[4].all_parms, points...)
+        push!(chains[5].all_parms, points...)
+        
+        c_indices = group_by_pattern(chains)
+        @test c_indices[1] == [1,2,3]
+        @test c_indices[2] == [4,5]
+
+        indices = map(c -> get_group_indices(chains, c), c_indices)
+        indices = vcat(indices...)
+        remove_redundant_chains!(chains, indices)
+
+        @test length(chains) == 3
+        @test chains[1].chain_id == 1
+        @test chains[2].chain_id == 3
+        @test chains[3].chain_id == 4
+    end 
 end
 

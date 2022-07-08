@@ -23,9 +23,12 @@ the parameter space
 - `p_eval`: the function that evalues the model and pattern functions
 - `adapt_radius!=adapt!`: a function in the form of `func(chain, options; kwargs...)` that adapts 
 the radius. 
-- `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case. 
+- `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case.
+- `n_dims`: number of dimensions in parameter space 
+- `parm_names`: a vector of symbols corresponding to parameter names. The default is [:p1,:p2,..:pn] 
+- `add_iters`: the number of trials to run after merging chains with the same pattern located in the same region 
 """
-@concrete struct Options
+@concrete mutable struct Options
     parallel
     radius
     bounds
@@ -35,15 +38,20 @@ the radius.
     adapt_radius!
     init_parms
     n_dims
+    parm_names
+    add_iters
+    last_id
 end
 
 function Options(;
         radius = .10, 
         bounds, 
-        n_iters, 
+        n_iters = default_n_iter(bounds), 
         init_parms,
         parallel = false,
         adapt_radius! = adapt!,
+        parm_names = nothing,
+        add_iters = 0,
         kwargs...
     )
 
@@ -51,6 +59,7 @@ function Options(;
     _adapt_radius! = (x,y) -> adapt_radius!(x, y; kwargs...)
     x_range = map(x -> x[2] - x[1], bounds)
     n_dims = length(bounds)
+    _parm_names = isnothing(parm_names) ? Symbol.("p", 1:n_dims) : parm_names
 
     return Options(
         parallel,
@@ -61,19 +70,27 @@ function Options(;
         p_eval, 
         _adapt_radius!,
         init_parms,
-        n_dims
+        n_dims,
+        _parm_names,
+        add_iters,
+        0,
     )
 end
+
+default_n_iter(b::Int) = Int(round(200 * 6 * 1.2^b))
+default_n_iter(b) = default_n_iter(length(b))
+
 
 Broadcast.broadcastable(x::Options) = Ref(x)
 
 """
-    Chain(;parms, pattern, radius) 
+    Chain(id, parms, pattern, radius)   
 
 An MCMC chain object.
 
 # Arguments
 
+- `id`: chain index
 - `parms`: a vector of parameters, i.e the current state of the chain
 - `pattern`: the target pattern of the chain 
 - `radius`: the radius for the jump distribution
@@ -85,62 +102,37 @@ An MCMC chain object.
 - `pattern`: the target pattern of the chain 
 - `radius`: the radius for the jump distribution
 - `acceptance`: a Boolean vector indicating whether a proposal was accepted
-- `init_parms`: a vector of starting points, such as [[.3,.4],[.3,.5]] in the 2 dimensional case. 
+- `all_parms`: a vector containing vectors of all sampled parameters 
+- `radii`: a vector of chain radii 
 """
-@concrete mutable struct Chain 
+@concrete mutable struct Chain
+    chain_id 
     parms
     n_dims
     pattern
     radius
-    acceptance 
+    acceptance
+    all_parms
+    radii 
+    level
+    λ
+    n_accept
+    n_attempt
 end
 
-function Chain(parms, pattern, radius) 
+function Chain(id, parms, pattern, radius) 
     return Chain(
+        id,
         parms,
         length(parms),
         pattern, 
         radius,
-        [true]
-    )
-end
-
-"""
-    Results(chain_id, chain, iter)
-
-Stores results for parameter space partitioning.
-
-# Arguments
-
-- `chain_id`: integer index for chain 
-- `chain`: chain object 
-- `iter`: current iteration
-
-An MCMC chain object.
-
-# Fields
-
-- `iter`: current iteration
-- `chain_id`: integer index for chain 
-- `parms`: parameter vector 
-- `pattern`: target pattern of chain
-- `acceptance`: a Boolean vector indicating whether a proposal was accepted
-"""
-@concrete struct Results
-    iter
-    chain_id
-    parms 
-    pattern
-    acceptance
-end
-
-function Results(chain_id, chain, iter)
-    acceptance = isempty(chain.acceptance) ? false : chain.acceptance[end]
-    return Results(
-        iter, 
-        chain_id, 
-        chain.parms, 
-        chain.pattern,
-        acceptance
+        [true],
+        [parms],
+        [radius],
+        0,
+        0.0,
+        1,
+        1
     )
 end

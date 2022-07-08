@@ -46,7 +46,6 @@ module TestModels
 
     - 'location`: location of chain in the hypercube
     - `p_bounds`: boundaries of partitions for each dimension 
-
     """
     function p_fun(location, hypercube::HyperCube, args...; kwargs...)
         p_bounds = hypercube.p_bounds
@@ -87,7 +86,6 @@ module TestModels
 
     - 'location`: location of chain in the hypercube
     - `points`: a vector of polytopes containing locations
-
     """
     function p_fun(location, points::Vector{Polytope}, args...; kwargs...)
         distances = map(p -> norm(location .- p.location), points)

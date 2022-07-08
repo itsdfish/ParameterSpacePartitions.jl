@@ -5,7 +5,7 @@
     all_patterns = [[1,2],[1,3]]
     patterns = [[1,2],[1,4]]
 
-    chains = [Chain([.3,.3], [1,2], .2),Chain([.3,.3], [1,3], .2)]
+    chains = [Chain(1, [.3,.3], [1,2], .2),Chain(2, [.3,.3], [1,3], .2)]
     chains[1].acceptance[1] = false
     chains[2].acceptance[1] = false
 
@@ -53,7 +53,7 @@ end
     proposal = [.3]
     pattern = [4,3]
     bounds = [(0,1)]
-    chain = Chain(parms, pattern, .3)
+    chain = Chain(1, parms, pattern, .3)
     update_position!(chain, proposal, pattern, bounds)
     @test chain.parms == [.3]
     @test chain.pattern == [4,3]
@@ -62,7 +62,7 @@ end
     parms = [.4]
     proposal = [.3]
     pattern = [4,3]
-    chain = Chain(parms, pattern, .3)
+    chain = Chain(1, parms, pattern, .3)
     update_position!(chain, proposal, [4,5], bounds)
     @test chain.parms == [.4]
     @test chain.pattern == [4,3]
@@ -72,7 +72,7 @@ end
     parms = [.4]
     proposal = [-.3]
     pattern = [4,3]
-    chain = Chain(parms, pattern, .3)
+    chain = Chain(1, parms, pattern, .3)
     update_position!(chain, proposal, pattern, bounds)
     @test chain.parms == [.4]
     @test chain.pattern == [4,3]
@@ -111,17 +111,11 @@ end
         init_parms
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3]
     )
 
     groups = groupby(df, :pattern)
@@ -168,17 +162,11 @@ end
         init_parms
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1,:p2,:p3,:p4,:p5]
     )
 
     groups = groupby(df, :pattern)
@@ -224,17 +212,11 @@ end
         init_parms
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         polytopes
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3, :p4, :p5]
     )
 
     groups = groupby(df, :pattern)
@@ -254,7 +236,7 @@ end
     # distribution of radii
     r_dist = () -> rand(Uniform(.2, .25))
     # number of starting points
-    n_start = 10
+    n_start = 1
     
     # partition boundaries
     hyperspheres = set_locations(r_dist, n_dims, n_obj)
@@ -269,189 +251,16 @@ end
         bounds,
         n_iters = 5000,
         init_parms,
-        λ = .05
     )
     
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         hyperspheres
     )
     
-    df = DataFrame(results)
     groups = groupby(df, :pattern)
 
     @test length(groups) == (n_obj + 1)
-end
-
-@safetestset "Adapt Radius 5D HyperCube" begin
-    using ParameterSpacePartitions
-    using ParameterSpacePartitions.TestModels
-    using Test, Random, Distributions
-    using DataFrames
-
-    Random.seed!(587)
-    # partitions per dimension
-    n_part = 4
-    # dimensions of hypbercue
-    n_dims = 5
-    # number of starting points
-    n_start = 1
-
-    # bounds of the hypercube
-    bounds = fill((0, 1), n_dims)
-    # partition boundaries
-    p_bounds = range(0, 1, n_part + 1)
-    hypercube = HyperCube(p_bounds)
- 
-    sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
-
-    init_parms = map(_ -> sample(bounds), 1:n_start)
-
-    t_rate = .4
-
-    options = Options(;
-        radius = .40,
-        bounds,
-        n_iters = 500,
-        parallel = false,
-        init_parms,
-        t_rate,
-        λ = .0
-    )
-
-    results = find_partitions(
-        model, 
-        p_fun, 
-        options,
-        hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1,:p2,:p3,:p4,:p5]
-    )
-
-    groups = groupby(df, :chain_id)
-    mean_accept = combine(groups, :acceptance=>mean=>:mean)
-    # show that initial radius results in poor acceptance
-    @test mean(mean_accept.mean) < .10
-    
-    options = Options(;
-        radius = .40,
-        bounds,
-        n_iters = 500,
-        parallel = false,
-        init_parms,
-        t_rate,
-        λ = .2
-    )
-
-    results = find_partitions(
-        model, 
-        p_fun, 
-        options,
-        hypercube
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1,:p2,:p3,:p4,:p5]
-    )
-
-    groups = groupby(df, :chain_id)
-    mean_accept = combine(groups, :acceptance=>mean=>:mean)
-    @test mean(mean_accept.mean) ≈ t_rate atol = .03
-    @test std(mean_accept.mean) < .05
-end
-
-@safetestset "Adapt Radius 5D Polytope" begin
-    using ParameterSpacePartitions
-    using ParameterSpacePartitions.TestModels
-    using Test, Random, Distributions
-    using DataFrames, LinearAlgebra
-    Random.seed!(2002)
-
-    # dimensions of the hypbercue
-    n_dims = 5
-    # number of partitions
-    n_part = 50
-    # number of starting points
-    n_start = 1
-    
-
-    # partition boundaries
-    polytopes = [Polytope(rand(n_dims)) for i in 1:n_part]
-    bounds = fill((0, 1), n_dims)
-
-    sample(bounds) = map(b -> rand(Uniform(b...)), bounds)
-
-    init_parms = map(_ -> sample(bounds), 1:n_start)
-
-    options = Options(;
-        radius = .5,
-        bounds,
-        n_iters = 500,
-        parallel = false,
-        init_parms,
-        adapt_radius! = no_adaption!
-    )
-
-    results = find_partitions(
-        model, 
-        p_fun, 
-        options,
-        polytopes
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3, :p4, :p5]
-    )
-
-    groups = groupby(df, :pattern)
-    @test length(groups) == n_part
-
-    groups = groupby(df, :chain_id)
-    mean_accept = combine(groups, :acceptance=>mean=>:mean)
-    # show that initial radius results in poor acceptance
-    @test mean(mean_accept.mean) < .10
-
-    t_rate = .4 
-
-    options = Options(;
-        radius = 1.0,
-        bounds,
-        n_iters = 1000,
-        parallel = false,
-        init_parms,
-        λ = 0.2,
-        t_rate
-    )
-
-    results = find_partitions(
-        model, 
-        p_fun, 
-        options,
-        polytopes
-    )
-
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => [:p1, :p2, :p3, :p4, :p5]
-    )
-
-    groups = groupby(df, :pattern)
-    @test length(groups) == n_part
-
-    groups = groupby(df, :chain_id)
-    mean_accept = combine(groups, :acceptance=>mean=>:mean)
-    # show that initial radius results in poor acceptance
-    @test mean(mean_accept.mean) ≈ t_rate atol = .04
-    @test std(mean_accept.mean) < .05
 end

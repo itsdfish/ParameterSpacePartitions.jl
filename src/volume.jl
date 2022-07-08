@@ -129,7 +129,7 @@ function bias_correction(
     bounds, 
     args...; 
     parm_names = Symbol.("p", 1:size(points,2)),
-    n_sim=10_000, 
+    n_sim = 10_000, 
     kwargs...
     )
     
@@ -146,13 +146,13 @@ function bias_correction(
         parms = sample_ellipsoid(μ, n, cov_mat)
         if in_bounds(parms, bounds)   
             pattern = _p_fun(_model(parms))
-            hits += hit_or_miss(pattern, target, parms, bounds)
+            hits += hit_or_miss(pattern, target, parms)
         end
     end
     return hits / n_sim
 end
 
-function hit_or_miss(target, pattern, parms, bounds)
+function hit_or_miss(target, pattern, parms)
     if target == pattern
         return 1
     end

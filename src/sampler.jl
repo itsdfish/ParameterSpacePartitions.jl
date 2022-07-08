@@ -1,5 +1,5 @@
 """
-    find_partitions(model, p_fun, options, args...; kwargs...)
+    find_partitions(model, p_fun, options, args...; show_timer=false, kwargs...)
 
 Performs parameter space partitioning.
 
@@ -12,56 +12,114 @@ Performs parameter space partitioning.
 
 # Keywords 
 
+- `show_timer=false`: displays timer and progress bar if true
 - `kwargs...`: keyword arguments passed to `model` and `p_fun`
 """
-function find_partitions(model, p_fun, options, args...; kwargs...)
+function find_partitions(model, p_fun, options, args...; show_timer=false, kwargs...)
     _model = x -> model(x, args...; kwargs...)
     _p_fun = x -> p_fun(x, args...; kwargs...)
-    # evaluate data pattern for each proposal
-    patterns = options.p_eval(options.init_parms, _model, _p_fun)
-    # initialize
-    chains = initialize(options.init_parms, patterns, options)
-    # add result type
-    results = map(c -> Results(c..., 0), enumerate(chains))
-    # list of all observed patterns
+
+    (;init_parms,add_iters) = options
+    n_init = length(init_parms)
+
+
+    timer = ProgressUnknown("Finding Regions:", spinner=true)
+    temp_chains = map(
+        p -> find_regions(
+            model, 
+            p_fun, 
+            options, 
+            p[2],
+            args...;
+            timer,
+            show_timer,
+            start_num = p[1],
+            kwargs...
+        ),
+        enumerate(init_parms)
+    )
+
+    timer = ProgressUnknown("Merging Chains:", spinner=true)
+    chains = vcat(temp_chains...)
+    n_init > 1 ? make_unique!(chains, options; timer, show_timer) : nothing
+    patterns = map(c -> c.pattern, chains)
     all_patterns = unique(patterns)
-    for iter in 1:options.n_iters
+
+    for iter in 1:add_iters
         # generate proposal for each chain
-        proposals = map(c -> generate_proposal(c, options), chains)
+        proposals = map(c -> propose(c, options), chains)
         # evaluate data pattern for each proposal
         patterns = options.p_eval(proposals, _model, _p_fun, options, chains)
         # accept or reject proposals 
         update_position!.(chains, proposals, patterns, options)
-        # record accepted results and update chains
-        update_results!(results, chains, iter)
         # add new chain if new pattern found
         process_new_patterns!(all_patterns, patterns, proposals, chains, options)
         # adjust the radius of each chain 
         options.adapt_radius!.(chains, options)
     end
-    return results
+    n_init  > 1 && add_iters > 1 ? make_unique!(chains, options; timer, show_timer) : nothing
+    finish!(timer)
+    return to_df(chains, options)
 end
 
-"""
-    update_results!(results, chains, iter)
+show_values(iter) = () -> [(:iter,iter),]
 
-Adds chain location (parameters), iteration, chain id, and data pattern to a `Results` vector.
+function find_regions(
+    model, 
+    p_fun, 
+    options, 
+    init_parm, 
+    args...; 
+    timer = nothing, 
+    show_timer = false, 
+    start_num = 0,
+    kwargs...
+    )
 
-# Arguments 
+    _model = x -> model(x, args...; kwargs...)
+    _p_fun = x -> p_fun(x, args...; kwargs...)
 
-- `results`: a vector of `Results` objects
-- `chains`: a vector of chains used to explore the parameter space 
-- `iter`: current iteration of the algorithm
-"""
-function update_results!(results, chains, iter)
-    for i in 1:length(chains)
-        push!(results, Results(i, chains[i], iter))
+    all_patterns = options.p_eval([init_parm], _model, _p_fun)
+    chains = initialize([init_parm], all_patterns, options)
+    complete_chains = Vector{eltype(chains)}()
+    while !isempty(chains)
+        # generate proposal for each chain
+        proposals = map(c -> propose(c, options), chains)
+        # evaluate data pattern for each proposal
+        patterns = options.p_eval(proposals, _model, _p_fun, options, chains)
+        # accept or reject proposals 
+        update_position!.(chains, proposals, patterns, options)
+        # add new chain if new pattern found
+        process_new_patterns!(all_patterns, patterns, proposals, chains, options)
+        # adjust the radius of each chain 
+        options.adapt_radius!.(chains, options)
+        remove_complete!(complete_chains, chains, options)
+        show_timer ? next!(timer; showvalues=show_values(start_num)) : nothing 
     end
-    return nothing
+    return complete_chains 
 end
 
+function remove_complete!(complete_chains, chains, options)
+    remove = fill(false, length(chains))
+    for (i,c) in enumerate(chains) 
+        if is_complete(c, options)
+            push!(complete_chains, c)
+            remove[i] = true            
+        end
+    end
+    deleteat!(chains, remove)
+    return nothing  
+end
+
+function is_complete(chain, options)
+    if (chain.level == 2) && (chain.n_attempt == options.n_iters)
+        return true
+    end
+    return false 
+end 
+
 """
-    t_eval_patterns(proposals, model, p_fun, options)
+    t_eval_patterns(proposals, model, p_fun, options, chains)
 
 Uses threading to generate patterns associated with a vector of proposals
 
@@ -71,7 +129,7 @@ Uses threading to generate patterns associated with a vector of proposals
 - `model`: a model function that returns predictions given a vector of parameters 
 - `p_fun`: a function that that evaluates the qualitative data pattern 
 - `options`: a set of options for configuring the algorithm
-
+- `chains`: a vector of `Chain` objects
 """
 function t_eval_patterns(proposals, model, p_fun, options, chains)
     (;bounds) = options
@@ -83,7 +141,7 @@ function t_eval_patterns(proposals, model, p_fun)
 end
 
 """
-    eval_patterns(proposals, model, p_fun, options)
+    eval_patterns(proposals, model, p_fun, options, chains)
 
 Generates patterns associated with a vector of proposals
 
@@ -93,6 +151,7 @@ Generates patterns associated with a vector of proposals
 - `model`: a model function that returns predictions given a vector of parameters 
 - `p_fun`: a function that that evaluates the qualitative data pattern 
 - `options`: a set of options for configuring the algorithm
+- `chains`: a vector of `Chain` objects
 
 """
 function eval_patterns(proposals, model, p_fun, options, chains)
@@ -109,7 +168,7 @@ function eval_pattern(p_fun, model, bounds, chain, parms)
 end
 
 """
-    generate_proposal(chain::Chain, options)
+    propose(chain::Chain, options)
 
 Generates a proposal adding a random sample from the surface of a hypersphere
 to the current location of the `chain`.
@@ -119,7 +178,7 @@ to the current location of the `chain`.
 - `chain`: a chain for exploring the parameter space
 - `options`: an `Options` object holding the configuration options for the algorithm
 """
-function generate_proposal(chain::Chain, options)
+function propose(chain::Chain, options)
     (;x_range,n_dims) = options
     Δ = random_position(chain) * rand() ^(1 / n_dims)
     new_parms = chain.parms + Δ .* options.x_range
@@ -155,12 +214,16 @@ function random_position(radius, n)
 end
 
 function initialize(init_parms, patterns, options)
-    # option for unique
-    return Chain.(init_parms, patterns, options.radius)
+    options.last_id += 1
+    last_id = options.last_id
+    n_start = length(init_parms)
+    ids = last_id:(last_id + n_start - 1)
+    options.last_id += (n_start - 1)
+    return Chain.(ids, init_parms, patterns, options.radius)
 end
 
 """
-    update_position!(chain, proposal, pattern)
+    update_position!(chain, proposal, pattern, bounds)
 
 Updates the position of the chain if proposal is accepted 
 
@@ -169,12 +232,19 @@ Updates the position of the chain if proposal is accepted
 - `chain`: a chain object for exploring the parameter space 
 - `proposal`: a proposed set of parameters for next location 
 - `pattern`: a data pattern associated with the proposal
+- `bounds`: a vector of tuples for lower and upper bounds of each parameter
 """
 function update_position!(chain, proposal, pattern, bounds)
+    chain.n_attempt += 1
     if in_bounds(proposal, bounds) && pattern == chain.pattern 
         push!(chain.acceptance, true)
+        chain.n_accept += 1
         chain.parms = proposal
+        push!(chain.radii, chain.radius)
+        push!(chain.all_parms, chain.parms)
     else
+        push!(chain.all_parms, chain.parms)
+        push!(chain.radii, chain.radius)
         push!(chain.acceptance, false)
     end
     return nothing
@@ -189,7 +259,8 @@ function process_new_patterns!(all_patterns, patterns, parms, chains, options)
         if !chains[p].acceptance[end] && is_new(all_patterns, patterns[p]) && 
             in_bounds(parms[p], options.bounds)
             push!(all_patterns, patterns[p])
-            push!(chains, Chain(parms[p], patterns[p], options.radius))
+            options.last_id += 1
+            push!(chains, Chain(options.last_id, parms[p], patterns[p], options.radius))
         end
     end
     return nothing
@@ -202,7 +273,7 @@ function no_adaption!(chain, options; kwargs...)
 end
 
 """
-    adapt!(
+    exp_adapt!(
         chain, 
         options; 
         t_rate = .25, 
@@ -229,12 +300,12 @@ acceptance rate.
 # Keyword Arguments
 
 - `t_rate = .25`: target acceptance rate 
-- `λ = .025`: adaption rate 
+- `λ = .05`: adaption rate 
 - `trace_on = false`: prints adaption information if true
 - `max_past = 300`: maximum past acceptance values considered in adaption
 - `kwargs...`: keyword arguments that are not processed
 """
-function adapt!(
+function exp_adapt!(
         chain, 
         options; 
         t_rate = .25, 
@@ -259,6 +330,113 @@ function adapt!(
     return nothing 
 end
 
+"""
+    adapt!(
+        chain, 
+        options; 
+        t_rate = .20, 
+        kwargs...
+    )
+
+Iteratively adapts the radius to achieve a target acceptance rate. The radius is adjusted according
+to the following factor `c`:
+
+```julia
+c = exp(λ * d_rate)
+```
+where `λ` is the adaption rate, and `d_rate` is the difference between the acceptance rate and target 
+acceptance rate.
+
+# Arguments
+
+- `chain`: a chain for exploring the parameter space
+- `options`: a set of options for configuring the algorithm
+
+# Keyword Arguments
+
+- `t_rate = .20`: target acceptance rate 
+- `kwargs...`: keyword arguments that are not processed
+"""
+function adapt!(
+    chain, 
+    options; 
+    t_rate = .20, 
+    kwargs...
+)
+    chain.level == 2 ? (return nothing) : nothing
+    n_dims = length(options.bounds)
+    n_attempt = chain.n_attempt  
+    λ = chain.λ
+    if chain.level == 0
+        n = ceil(100 * 1.2^n_dims)
+        if mod(n_attempt, n) == 0
+            a_rate = chain.n_accept / n
+            chain.n_accept = 0
+            if a_rate < (t_rate - .08)
+                if λ > 0
+                    λ -= .5
+                    chain.level = 1
+                    chain.n_attempt = 0
+                else
+                    λ -= 1.0
+                end
+            elseif (a_rate ≥ (t_rate - .08)) && (a_rate < (t_rate + .16))
+                chain.level = 1
+                chain.n_attempt = 0
+            elseif a_rate ≥ (t_rate + .16)
+                if  λ < 0 
+                    λ += .5
+                    chain.level = 1
+                    chain.n_attempt = 0
+                else
+                    λ += 1
+                end 
+            end
+        end
+    elseif chain.level == 1
+        n = ceil(200 * 1.2^n_dims)
+        v = n_attempt / n
+        if mod(n_attempt, n) == 0
+            a_rate = chain.n_accept / n
+            chain.n_accept = 0
+            if a_rate < (t_rate - .05)
+                λ = λ - .25 / ceil(v / 2)
+                if v == 4
+                    chain.level = 2
+                    chain.n_attempt = 0
+                end
+            elseif (a_rate ≥ (t_rate - .05)) && (a_rate < (t_rate - .01))
+                λ -= .125
+                chain.level = 2
+                chain.n_attempt = 0
+            elseif (a_rate ≥ (t_rate - .01)) && (a_rate < (t_rate + .04))
+                chain.level = 2
+                chain.n_attempt = 0
+            elseif (a_rate ≥ (t_rate + .04)) && (a_rate < (t_rate + .10))
+                λ += .125
+                chain.level = 2
+                chain.n_attempt = 0
+            elseif a_rate > (t_rate + .10)
+                λ = λ + .25 / ceil(v / 2)
+                if v == 4
+                    chain.level = 2
+                    chain.n_attempt = 0
+                end
+            end
+        end
+    end
+    chain.radius = options.radius * 2^λ
+    chain.λ = λ
+    return nothing 
+end
+
+function accept_rate(chain, n_trials::Int, n::Int)
+    m = div(n_trials, n)
+    lb = (m - 1) * n + 1
+    ub = m * n 
+    return mean(@view chain.accept_rate[lb:ub])
+end
+
 function print_adapt(chain, d_rate, c)
     println(
         "pattern: ", chain.pattern, 
@@ -268,4 +446,15 @@ function print_adapt(chain, d_rate, c)
     )
     println(" ")
     return nothing
+end
+
+function to_df(chains, options)
+    df = DataFrame(chains)
+    col_names = [:chain_id,:pattern]
+    return combine(
+        groupby(df, col_names), 
+        :all_parms => only => options.parm_names,
+        :acceptance => only => :acceptance,
+        :radii => only => :radius
+    )
 end

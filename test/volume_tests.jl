@@ -45,7 +45,7 @@ end
 @safetestset "4D Ellipsoid Volume" begin
     using Test, QHull, Random, Distributions, LinearAlgebra
     using ParameterSpacePartitions: volume_ellipsoid, sample_ellipsoid_surface
-    Random.seed!(28805)
+    Random.seed!(3505)
     n = 4
     μ = fill(0.0, n)
     
@@ -64,13 +64,12 @@ end
 end
 
 @safetestset "3D Odd Shape Volume" begin
-
     using Test, Distributions, ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(1495)
+    Random.seed!(1282)
 
     c = (
         # number of shapes
@@ -97,13 +96,12 @@ end
 end
 
 @safetestset "5D Odd Shape Volume" begin
-
     using Test, Distributions, ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
     using Random, DataFrames, StatsBase
     include("volume_functions.jl")
 
-    Random.seed!(82544)
+    Random.seed!(8541)
 
     c = (
         # number of shapes
@@ -115,7 +113,7 @@ end
         # number of partitions per dimension
         n_part = 5,
         # number of cells for each shapes
-        n_cells = [10,20],
+        n_cells = [20,40],
         # number of starting points for the algorithm
         n_start = 1,
     )
@@ -134,12 +132,10 @@ end
     using Test, ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
     using Random, DataFrames, Distributions
-    Random.seed!(8492)
+    Random.seed!(84723)
 
     # dimensions of the hypbercue
     n_dims = 5
-    # number of partitions
-    n_part = 5
     # number of starting points
     n_start = 1
 
@@ -164,42 +160,31 @@ end
     options = Options(;
         radius = .1,
         bounds,
-        n_iters = 10_000,
-        parallel = false,
+        n_iters = 3_000,
         init_parms,
-        λ = .025,
-        t_rate = .3,
+        t_rate = .2,
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun, 
         options,
         polytopes
     )
 
-    parm_names = Symbol.("p", 1:n_dims)
-    df = DataFrame(results)
-    transform!(
-        df, 
-        :parms => identity => parm_names
-    )
-
     groups = groupby(df, :chain_id)
     mean_accept = combine(groups, :acceptance=>mean=>:mean)
 
     groups = groupby(df, :pattern)
+    parm_names = options.parm_names
 
-    df_volume = combine(
-        groups,
-        x -> estimate_volume(
-            model,
-            p_fun, 
-            x,  
-            bounds,
-            polytopes; 
-            parm_names,
-        )
+    df_volume = estimate_volume(
+        model,
+        p_fun, 
+        groups,  
+        bounds,
+        polytopes; 
+        parm_names,
     )
 
     df_volume.volume = df_volume.x1 / sum(df_volume.x1)
@@ -212,7 +197,7 @@ end
         0.0848
         0.23185
     ]
-    true_df = DataFrame(pattern = 1:n_part, volume = true_volume)
+    true_df = DataFrame(pattern = 1:n_dims, volume = true_volume)
     abs_error = abs.(true_volume .- df_volume.volume)
     max_abs_error = maximum(abs_error)
     mean_abs_error = mean(abs_error)

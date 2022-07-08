@@ -19,22 +19,16 @@ function volume_sim(config)
         init_parms
     )
 
-    results = find_partitions(
+    df = find_partitions(
         model, 
         p_fun,
         options,
         odd_shape
     )
 
-    df = DataFrame(results)
-
-    parm_names = Symbol.("p",1:n_dims)
-    transform!(
-        df, 
-        :parms => identity => parm_names
-    )
-
-    transform!(df, :pattern => denserank => :pattern_id)
+    #parm_names = options.parm_names
+    parm_names = Symbol.("p", 1:n_dims)
+    #transform!(df, :pattern => denserank => :pattern_id)
 
     target_pattern = 1
     df_p = filter(x-> x.pattern == target_pattern, df)
