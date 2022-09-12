@@ -46,8 +46,18 @@ function intersects(μ1, μ2, cov1, cov2, c=2)
     elseif all(sign.(test_point) ≠ sign.(c2b))
         return true 
     else
-        return false
+        cholQ2b = cholesky(Q2b).U
+        result = optimize(
+            x -> dist_to_0(x[1], cholQ2b, c2b), 
+            [0.0], [2 * π], [.5], NelderMead()
+        )
+        return result.minimum < 1
     end
+end
+
+function dist_to_0(α, cholQ, ctr)
+    x = [cos(α) sin(α)]
+    return sqrt(sum((x * cholQ  .+ ctr').^2))
 end
 
 """
