@@ -227,7 +227,7 @@ end
     using Test, ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
     using LinearAlgebra, Random, DataFrames, Distributions
-    Random.seed!(383)
+    Random.seed!(38333)
     
     # dimensions of the hypbercue
     n_dims = 7

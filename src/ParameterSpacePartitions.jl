@@ -1,16 +1,22 @@
 module ParameterSpacePartitions
-    using Requires, ProgressMeter, Distributions, ConcreteStructs, LinearAlgebra
-    using ThreadedIterables, SpecialFunctions, ComponentArrays
+    using ComponentArrays
+    using ConcreteStructs
+    using Distributions
+    using LinearAlgebra
+    using ProgressMeter
+    using Requires
+    using SpecialFunctions
+    using ThreadedIterables
 
-    export find_partitions,
-        adapt!,
-        no_adaption!,
-        estimate_volume,
-        bias_correction,
-        psp_slices
+    export find_partitions
+    export adapt!
+    export no_adaption!
+    export estimate_volume
+    export bias_correction
+    export psp_slices
 
-    export Options,
-        Results
+    export Options
+    export Results
 
     include("init.jl")
     include("structs.jl")
