@@ -12,7 +12,6 @@ module ParameterSpacePartitions
     export adapt!
     export no_adaption!
     export estimate_volume
-    export bias_correction
     export psp_slices
 
     export Options
