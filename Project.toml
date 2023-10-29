@@ -28,6 +28,7 @@ QHull = "0.2"
 Requires = "1.3.0"
 SafeTestsets = "0.0.1,0.1.0"
 SpecialFunctions = "2"
+Statistics = "1"
 ThreadedIterables = "v0.2.1"
 julia = "1"
 
