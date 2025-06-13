@@ -4,19 +4,19 @@
     Random.seed!(633)
     n = 2
     μ = fill(0.0, n)
-    for _ in 1:5
+    for _ = 1:5
         x = randn(n, n)
         cov_mat = x' * x
         fun = sample_ellipsoid_surface
         x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
         points = reduce(vcat, transpose.(x))
-        
+
         v1 = volume_ellipsoid(n, cov_mat)
-        
+
         hull = chull(points)
-        v2 = hull.volume 
-        
-        @test v1 ≈ v2 rtol = .03
+        v2 = hull.volume
+
+        @test v1 ≈ v2 rtol = 0.03
     end
 end
 
@@ -26,19 +26,19 @@ end
     Random.seed!(584)
     n = 3
     μ = fill(0.0, n)
-    for _ in 1:5
+    for _ = 1:5
         x = randn(n, n)
         cov_mat = x' * x
         fun = sample_ellipsoid_surface
         x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
         points = reduce(vcat, transpose.(x))
-        
+
         v1 = volume_ellipsoid(n, cov_mat)
-        
+
         hull = chull(points)
-        v2 = hull.volume 
-        
-        @test v1 ≈ v2 rtol = .03
+        v2 = hull.volume
+
+        @test v1 ≈ v2 rtol = 0.03
     end
 end
 
@@ -48,19 +48,19 @@ end
     Random.seed!(3505)
     n = 4
     μ = fill(0.0, n)
-    
+
     x = randn(n, n)
     cov_mat = x' * x
     fun = sample_ellipsoid_surface
     x = map(_ -> fun(μ, n, cov_mat), 1:10_000)
     points = reduce(vcat, transpose.(x))
-    
+
     v1 = volume_ellipsoid(n, cov_mat)
-    
+
     hull = chull(points)
-    v2 = hull.volume 
-    
-    @test v1 ≈ v2 rtol = .03
+    v2 = hull.volume
+
+    @test v1 ≈ v2 rtol = 0.03
 end
 
 @safetestset "3D Odd Shape Volume" begin
@@ -81,9 +81,9 @@ end
         # number of partitions per dimension
         n_part = 5,
         # number of cells for each shapes
-        n_cells = [10,20],
+        n_cells = [10, 20],
         # number of starting points for the algorithm
-        n_start = 1,
+        n_start = 1
     )
 
     ratios = map(_ -> volume_sim(c), 1:10)
@@ -92,7 +92,7 @@ end
     tv2 = c.n_cells[2] * (1 / c.n_part)^c.n_dims
     true_ratio = tv1 / tv2
     ratio = mean(ratios)
-    @test ratio ≈ true_ratio rtol = .2
+    @test ratio ≈ true_ratio rtol = 0.2
 end
 
 @safetestset "5D Odd Shape Volume" begin
@@ -113,9 +113,9 @@ end
         # number of partitions per dimension
         n_part = 5,
         # number of cells for each shapes
-        n_cells = [20,40],
+        n_cells = [20, 40],
         # number of starting points for the algorithm
-        n_start = 1,
+        n_start = 1
     )
 
     ratios = map(_ -> volume_sim(c), 1:10)
@@ -124,11 +124,10 @@ end
     tv2 = c.n_cells[2] * (1 / c.n_part)^c.n_dims
     true_ratio = tv1 / tv2
     ratio = mean(ratios)
-    @test ratio ≈ true_ratio rtol = .5
+    @test ratio ≈ true_ratio rtol = 0.5
 end
 
-@safetestset "Volume 5D Polytope" begin 
- 
+@safetestset "Volume 5D Polytope" begin
     using Test, ParameterSpacePartitions
     using ParameterSpacePartitions.TestModels
     using Random, DataFrames, Distributions
@@ -141,12 +140,12 @@ end
 
     #points = [round.(rand(n_dims), digits=3) for _ in 1:n_part]
 
-    points = [ 
+    points = [
         [0.659, 0.547, 0.842, 0.349, 0.667],
         [0.121, 0.758, 0.141, 0.4, 0.955],
         [0.232, 0.696, 0.999, 0.655, 0.257],
         [0.312, 0.057, 0.977, 0.025, 0.154],
-        [0.191, 0.782, 0.051, 0.697, 0.653],
+        [0.191, 0.782, 0.051, 0.697, 0.653]
     ]
 
     # partition boundaries
@@ -158,16 +157,16 @@ end
     init_parms = map(_ -> sample(bounds), 1:n_start)
 
     options = Options(;
-        radius = .1,
+        radius = 0.1,
         bounds,
         n_iters = 3_000,
         init_parms,
-        t_rate = .2,
+        t_rate = 0.2
     )
 
     df = find_partitions(
-        model, 
-        p_fun, 
+        model,
+        p_fun,
         options,
         polytopes
     )
@@ -180,11 +179,11 @@ end
 
     df_volume = estimate_volume(
         model,
-        p_fun, 
-        groups,  
+        p_fun,
+        groups,
         bounds,
-        polytopes; 
-        parm_names,
+        polytopes;
+        parm_names
     )
 
     df_volume.volume = df_volume.x1 / sum(df_volume.x1)
@@ -204,7 +203,7 @@ end
     sort!(df_volume, :volume)
     sort!(true_df, :volume)
     r = cor(df_volume.pattern, true_df.pattern)
-    @test max_abs_error < .03
-    @test mean_abs_error < .015
-    @test r > .8
+    @test max_abs_error < 0.03
+    @test mean_abs_error < 0.015
+    @test r > 0.8
 end

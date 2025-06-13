@@ -1,5 +1,5 @@
-function get_axes(Σ, c=2)
-    eig_val,_ = eigen(Σ)
+function get_axes(Σ, c = 2)
+    eig_val, _ = eigen(Σ)
     return 2 * c * sqrt.(eig_val)
 end
 

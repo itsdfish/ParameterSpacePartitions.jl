@@ -34,27 +34,26 @@ Estimate volume of region with an eillipsoid and hit or miss bias adjustment.
 - `kwargs...`: additional keyword arguments passed to `model` or `p_fun`
 """
 function estimate_volume(
-    model, 
-    p_fun, 
-    df::SubDataFrame, 
-    bounds,  
+    model,
+    p_fun,
+    df::SubDataFrame,
+    bounds,
     args...;
     n_sim = 10_000,
     parm_names,
     show_progress = false,
     meter = nothing,
     kwargs...
-    )
-    
-    points = Array(df[:,parm_names])
+)
+    points = Array(df[:, parm_names])
     target = df.pattern[1]
 
     df_volume = estimate_volume(
-        model, 
-        p_fun, 
-        points, 
-        target, 
-        bounds, 
+        model,
+        p_fun,
+        points,
+        target,
+        bounds,
         args...;
         parm_names,
         n_sim,
@@ -101,17 +100,16 @@ Estimate volume of region with an eillipsoid and hit or miss bias adjustment.
 - `kwargs...`: additional keyword arguments passed to `model` or `p_fun`
 """
 function estimate_volume(
-    model, 
-    p_fun, 
-    groups::GroupedDataFrame, 
-    bounds,  
+    model,
+    p_fun,
+    groups::GroupedDataFrame,
+    bounds,
     args...;
     n_sim = 10_000,
     show_progress = false,
     parm_names,
     kwargs...
-    )
-    
+)
     n_groups = length(groups)
     meter = Progress(n_groups)
 
@@ -119,8 +117,8 @@ function estimate_volume(
         groups,
         x -> estimate_volume(
             model,
-            p_fun, 
-            x,  
+            p_fun,
+            x,
             bounds,
             args...;
             parm_names,

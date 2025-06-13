@@ -1,5 +1,5 @@
 
-volume_hypersphere(n, r=1) = π^(n / 2) / gamma(1 + n / 2) * r^n
+volume_hypersphere(n, r = 1) = π^(n / 2) / gamma(1 + n / 2) * r^n
 
 """
     log_vol_hypersphere(n, r=1)
@@ -14,7 +14,7 @@ Computes the log volume of a hypersphere
 
 - `r=1`: the radius
 """
-log_vol_hypersphere(n; r=1) = (n / 2) * log(π) - loggamma(1 + n / 2) + n * log(r)
+log_vol_hypersphere(n; r = 1) = (n / 2) * log(π) - loggamma(1 + n / 2) + n * log(r)
 
 """
     log_vol_ellipsiod(n, cov_mat; r = 1)
@@ -31,8 +31,8 @@ Computes the log volume of a ellipsoid
 """
 function log_vol_ellipsiod(n, cov_mat; r = 1)
     vol = log_vol_hypersphere(n; r)
-    eig_val,_ = eigen(cov_mat)
-    return vol + .5 * sum(log(n + 2) .+ log.(eig_val))
+    eig_val, _ = eigen(cov_mat)
+    return vol + 0.5 * sum(log(n + 2) .+ log.(eig_val))
 end
 
 """
@@ -52,9 +52,9 @@ function volume_ellipsoid(n, cov_mat; r = 1)
     return exp(log_vol_ellipsiod(n, cov_mat; r))
 end
 
-volume_ellipsoid(cov_mat; r=1) = volume_ellipsoid(size(cov_mat, 2), cov_mat; r)
+volume_ellipsoid(cov_mat; r = 1) = volume_ellipsoid(size(cov_mat, 2), cov_mat; r)
 
-log_vol_ellipsiod(cov_mat; r=1) = log_vol_ellipsiod(size(cov_mat, 2), cov_mat; r)
+log_vol_ellipsiod(cov_mat; r = 1) = log_vol_ellipsiod(size(cov_mat, 2), cov_mat; r)
 
 """
     sample_ellipsoid(μ, n_dims, cov_mat)
@@ -87,7 +87,7 @@ Samples a point uniformly from the surface of an ellipsoid
 
 - `r=1`: radius of underlying unit hypersphere 
 """
-function sample_ellipsoid_surface(μ, n_dims, cov_mat; r=1)
+function sample_ellipsoid_surface(μ, n_dims, cov_mat; r = 1)
     x = random_position(r, n_dims)
     return μ .+ sqrt((n_dims + 2) * cov_mat) * x
 end
@@ -123,17 +123,16 @@ Uses the hit or miss technique to adjust volume estimates based on ellipsoids.
 """
 function bias_correction(
     model,
-    p_fun, 
-    points, 
-    target, 
-    bounds, 
-    args...; 
-    parm_names = Symbol.("p", 1:size(points,2)),
-    n_sim = 10_000, 
+    p_fun,
+    points,
+    target,
+    bounds,
+    args...;
+    parm_names = Symbol.("p", 1:size(points, 2)),
+    n_sim = 10_000,
     kwargs...
-    )
-    
-    _μ = mean(points, dims=1)[:]
+)
+    _μ = mean(points, dims = 1)[:]
     μ = ComponentArray(_μ, make_axis(parm_names))
     cov_mat = cov(points)
     n = length(μ)
@@ -142,9 +141,9 @@ function bias_correction(
     _p_fun = x -> p_fun(x, args...; kwargs...)
 
     hits = 0
-    for i in 1:n_sim
+    for i = 1:n_sim
         parms = sample_ellipsoid(μ, n, cov_mat)
-        if in_bounds(parms, bounds)   
+        if in_bounds(parms, bounds)
             pattern = _p_fun(_model(parms))
             hits += hit_or_miss(pattern, target, parms)
         end
@@ -186,29 +185,28 @@ Estimate volume of region with an eillipsoid and hit or miss bias adjustment.
 - `kwargs...`: additional keyword arguments passed to `model` or `p_fun`
 """
 function estimate_volume(
-    model, 
-    p_fun, 
-    points, 
-    target, 
-    bounds,  
+    model,
+    p_fun,
+    points,
+    target,
+    bounds,
     args...;
     n_sim = 10_000,
-    parm_names = Symbol.("p", 1:size(points,2)),
+    parm_names = Symbol.("p", 1:size(points, 2)),
     kwargs...
-    )
-
+)
     cf = bias_correction(
         model,
-        p_fun, 
-        points, 
-        target, 
-        bounds, 
+        p_fun,
+        points,
+        target,
+        bounds,
         args...;
         n_sim,
         parm_names,
         kwargs...
     )
-    
+
     cov_mat = cov(points)
     volume = volume_ellipsoid(cov_mat)
     volume *= cf

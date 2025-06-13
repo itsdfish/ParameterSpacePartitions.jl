@@ -1,8 +1,8 @@
 function volume_sim(config)
-    (;n_shapes,n_sim,n_dims) = config
-    (;n_dims,n_part,n_cells, n_start) = config
+    (; n_shapes, n_sim, n_dims) = config
+    (; n_dims, n_part, n_cells, n_start) = config
     # partition boundaries
-    bounds = fill((0,1), n_dims)
+    bounds = fill((0, 1), n_dims)
     indices = set_indices(n_dims, n_part, n_cells)
     p_bounds = range(0, 1, length = n_part + 1)
 
@@ -13,14 +13,14 @@ function volume_sim(config)
     init_parms = map(_ -> sample(bounds), 1:n_start)
 
     options = Options(;
-        radius = .10,
+        radius = 0.10,
         bounds,
         n_iters = 20_000,
         init_parms
     )
 
     df = find_partitions(
-        model, 
+        model,
         p_fun,
         options,
         odd_shape
@@ -31,27 +31,27 @@ function volume_sim(config)
     #transform!(df, :pattern => denserank => :pattern_id)
 
     target_pattern = 1
-    df_p = filter(x-> x.pattern == target_pattern, df)
-    points = Array(df_p[:,parm_names])
+    df_p = filter(x->x.pattern == target_pattern, df)
+    points = Array(df_p[:, parm_names])
     v1 = estimate_volume(
         model,
-        p_fun, 
-        points, 
-        target_pattern, 
-        bounds, 
+        p_fun,
+        points,
+        target_pattern,
+        bounds,
         odd_shape;
-        n_sim,
+        n_sim
     )
 
     target_pattern = 2
-    df_p = filter(x-> x.pattern == target_pattern, df)
-    points = Array(df_p[:,parm_names])
+    df_p = filter(x->x.pattern == target_pattern, df)
+    points = Array(df_p[:, parm_names])
     v2 = estimate_volume(
         model,
-        p_fun, 
-        points, 
-        target_pattern, 
-        bounds, 
+        p_fun,
+        points,
+        target_pattern,
+        bounds,
         odd_shape;
         n_sim
     )

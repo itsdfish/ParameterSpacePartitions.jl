@@ -29,57 +29,55 @@ the radius.
 - `add_iters`: the number of trials to run after merging chains with the same pattern located in the same region 
 """
 @concrete mutable struct Options
-    parallel
-    radius
-    bounds
-    x_range
-    n_iters
-    p_eval
-    adapt_radius!
-    init_parms
-    n_dims
-    parm_names
-    add_iters
-    last_id
+    parallel::Any
+    radius::Any
+    bounds::Any
+    x_range::Any
+    n_iters::Any
+    p_eval::Any
+    adapt_radius!::Any
+    init_parms::Any
+    n_dims::Any
+    parm_names::Any
+    add_iters::Any
+    last_id::Any
 end
 
 function Options(;
-        radius = .10, 
-        bounds, 
-        n_iters = default_n_iter(bounds), 
-        init_parms,
-        parallel = false,
-        adapt_radius! = adapt!,
-        parm_names = nothing,
-        add_iters = 0,
-        kwargs...
-    )
-
+    radius = 0.10,
+    bounds,
+    n_iters = default_n_iter(bounds),
+    init_parms,
+    parallel = false,
+    adapt_radius! = adapt!,
+    parm_names = nothing,
+    add_iters = 0,
+    kwargs...
+)
     p_eval = parallel ? t_eval_patterns : eval_patterns
-    _adapt_radius! = (x,y) -> adapt_radius!(x, y; kwargs...)
+    _adapt_radius! = (x, y) -> adapt_radius!(x, y; kwargs...)
     x_range = map(x -> x[2] - x[1], bounds)
     n_dims = length(bounds)
     _parm_names = isnothing(parm_names) ? Symbol.("p", 1:n_dims) : parm_names
 
     return Options(
         parallel,
-        radius, 
+        radius,
         bounds,
-        x_range, 
-        n_iters, 
-        p_eval, 
+        x_range,
+        n_iters,
+        p_eval,
         _adapt_radius!,
         init_parms,
         n_dims,
         _parm_names,
         add_iters,
-        0,
+        0
     )
 end
 
 default_n_iter(b::Int) = Int(round(200 * 6 * 1.2^b))
 default_n_iter(b) = default_n_iter(length(b))
-
 
 Broadcast.broadcastable(x::Options) = Ref(x)
 
@@ -106,26 +104,26 @@ An MCMC chain object.
 - `radii`: a vector of chain radii 
 """
 @concrete mutable struct Chain
-    chain_id 
-    parms
-    n_dims
-    pattern
-    radius
-    acceptance
-    all_parms
-    radii 
-    level
-    λ
-    n_accept
-    n_attempt
+    chain_id::Any
+    parms::Any
+    n_dims::Any
+    pattern::Any
+    radius::Any
+    acceptance::Any
+    all_parms::Any
+    radii::Any
+    level::Any
+    λ::Any
+    n_accept::Any
+    n_attempt::Any
 end
 
-function Chain(id, parms, pattern, radius) 
+function Chain(id, parms, pattern, radius)
     return Chain(
         id,
         parms,
         length(parms),
-        pattern, 
+        pattern,
         radius,
         [true],
         [parms],

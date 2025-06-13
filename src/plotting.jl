@@ -1,4 +1,4 @@
-using StatsPlots 
+using StatsPlots
 
 """
     psp_slices(
@@ -54,32 +54,32 @@ identiy function
 
 """
 function psp_slices(
-    model, 
-    p_fun, 
-    parm_names, 
-    bounds, 
-    v_parm; 
+    model,
+    p_fun,
+    parm_names,
+    bounds,
+    v_parm;
     v_range,
     sample,
     name_fun = x -> x,
     color_fun = default_mapping,
     opt_set = (),
-    plot_options = (), 
-    n_start = 1, 
+    plot_options = (),
+    n_start = 1,
     kwargs...
-    )
+)
     plots = map(
         x -> psp_slice(
-            model, 
-            p_fun, 
-            parm_names, 
-            bounds, 
-            v_parm, 
+            model,
+            p_fun,
+            parm_names,
+            bounds,
+            v_parm,
             x;
             sample,
             name_fun,
             color_fun,
-            opt_set, 
+            opt_set,
             plot_options,
             n_start,
             kwargs...
@@ -90,25 +90,24 @@ function psp_slices(
 end
 
 function psp_slice(
-    model, 
-    p_fun, 
-    parm_names, 
-    bounds, 
-    v_parm, 
+    model,
+    p_fun,
+    parm_names,
+    bounds,
+    v_parm,
     v_val;
     sample,
     name_fun = x -> x,
     color_fun = default_mapping,
-    opt_set = (), 
+    opt_set = (),
     plot_options = (),
     n_start = 1,
     kwargs...
-    ) 
-
+)
     init_parms = map(_ -> sample(bounds, parm_names), 1:n_start)
 
     options = Options(;
-        radius = .10,
+        radius = 0.10,
         bounds,
         n_iters = 5_000,
         init_parms,
@@ -117,7 +116,7 @@ function psp_slice(
     )
 
     df = find_partitions(
-        model, 
+        model,
         p_fun,
         options;
         kwargs...,
@@ -128,18 +127,18 @@ function psp_slice(
     sort!(df, :color)
 
     p = @df df scatter(
-        cols(parm_names[1]), 
+        cols(parm_names[1]),
         cols(parm_names[2]),
         group = :pattern_var,
         grid = false,
         leg = false,
         xaxis = string(parm_names[1]),
         yaxis = string(parm_names[2]),
-        title = string(v_parm, " = ", round(v_val, digits=3)),
+        title = string(v_parm, " = ", round(v_val, digits = 3)),
         titlefontsize = 10,
         palette = :tab10,
         color = :color,
-        plot_options...,
+        plot_options...
     )
     return p
 end
@@ -147,12 +146,12 @@ end
 function default_mapping(x)
     v = fill(0, length(x))
     u_vals = unique(x)
-    for (i,u) in enumerate(u_vals)
-        for j in 1:length(x)
+    for (i, u) in enumerate(u_vals)
+        for j = 1:length(x)
             if x[j] == u
-                v[j] = i 
+                v[j] = i
             end
         end
     end
-    return v 
+    return v
 end
