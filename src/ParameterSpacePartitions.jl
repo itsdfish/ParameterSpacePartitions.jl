@@ -6,7 +6,7 @@ using LinearAlgebra
 using ProgressMeter
 using Requires
 using SpecialFunctions
-using ThreadedIterables
+using ThreadsX
 
 export find_partitions
 export adapt!

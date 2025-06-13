@@ -146,8 +146,8 @@ end
 function default_mapping(x)
     v = fill(0, length(x))
     u_vals = unique(x)
-    for (i, u) in enumerate(u_vals)
-        for j = 1:length(x)
+    for (i, u) ∈ enumerate(u_vals)
+        for j ∈ 1:length(x)
             if x[j] == u
                 v[j] = i
             end

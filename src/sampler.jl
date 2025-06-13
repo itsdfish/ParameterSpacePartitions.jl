@@ -22,7 +22,7 @@ function find_partitions(model, p_fun, options, args...; show_timer = false, kwa
     (; init_parms, add_iters) = options
     n_init = length(init_parms)
 
-    timer = ProgressUnknown("Finding Regions:", spinner = true)
+    timer = ProgressUnknown(; desc = "Finding Regions:", spinner = true)
     temp_chains = map(
         p -> find_regions(
             model,
@@ -38,13 +38,13 @@ function find_partitions(model, p_fun, options, args...; show_timer = false, kwa
         enumerate(init_parms)
     )
 
-    timer = ProgressUnknown("Merging Chains:", spinner = true)
+    timer = ProgressUnknown(; desc = "Merging Chains:", spinner = true)
     chains = vcat(temp_chains...)
     n_init > 1 ? make_unique!(chains, options; timer, show_timer) : nothing
     patterns = map(c -> c.pattern, chains)
     all_patterns = unique(patterns)
 
-    for iter = 1:add_iters
+    for iter ∈ 1:add_iters
         # generate proposal for each chain
         proposals = map(c -> propose(c, options), chains)
         # evaluate data pattern for each proposal
@@ -99,7 +99,7 @@ end
 
 function remove_complete!(complete_chains, chains, options)
     remove = fill(false, length(chains))
-    for (i, c) in enumerate(chains)
+    for (i, c) ∈ enumerate(chains)
         if is_complete(c, options)
             push!(complete_chains, c)
             remove[i] = true
@@ -131,11 +131,15 @@ Uses threading to generate patterns associated with a vector of proposals
 """
 function t_eval_patterns(proposals, model, p_fun, options, chains)
     (; bounds) = options
-    return tmap((c, p) -> eval_pattern(p_fun, model, bounds, c, p), chains, proposals)
+    return ThreadsX.map(
+        (c, p) -> eval_pattern(p_fun, model, bounds, c, p),
+        chains,
+        proposals
+    )
 end
 
 function t_eval_patterns(proposals, model, p_fun)
-    return tmap(p -> p_fun(model(p)), proposals)
+    return ThreadsX.map(p -> p_fun(model(p)), proposals)
 end
 
 """
@@ -179,12 +183,12 @@ to the current location of the `chain`.
 function propose(chain::Chain, options)
     (; x_range, n_dims) = options
     Δ = random_position(chain) * rand() ^ (1 / n_dims)
-    new_parms = chain.parms + Δ .* options.x_range
+    new_parms = chain.parms + Δ .* x_range
     return new_parms
 end
 
 function in_bounds(parms::AbstractArray, bounds)
-    for i = 1:length(bounds)
+    for i ∈ 1:length(bounds)
         !in_bounds(parms[i], bounds[i]) ? (return false) : nothing
     end
     return true
@@ -253,7 +257,7 @@ function update_position!(chain, proposal, pattern, options::Options)
 end
 
 function process_new_patterns!(all_patterns, patterns, parms, chains, options)
-    for p = 1:length(patterns)
+    for p ∈ 1:length(patterns)
         if !chains[p].acceptance[end] && is_new(all_patterns, patterns[p]) &&
            in_bounds(parms[p], options.bounds)
             push!(all_patterns, patterns[p])

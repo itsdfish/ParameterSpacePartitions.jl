@@ -14,7 +14,8 @@
         radius = 0.2,
         bounds = [(0, 1), (0, 1)],
         n_iters = 100,
-        init_parms = [[0.2, 0.3]]
+        init_parms = [[0.2, 0.3]],
+        parallel = false
     )
 
     @test !is_new(all_patterns, patterns[1])
@@ -246,7 +247,8 @@ end
         radius = 0.15,
         bounds,
         n_iters = 5000,
-        init_parms
+        init_parms,
+        parallel = false
     )
 
     df = find_partitions(
