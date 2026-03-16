@@ -29,18 +29,18 @@ the radius.
 - `add_iters`: the number of trials to run after merging chains with the same pattern located in the same region 
 """
 @concrete mutable struct Options
-    parallel::Any
-    radius::Any
-    bounds::Any
-    x_range::Any
-    n_iters::Any
-    p_eval::Any
-    adapt_radius!::Any
-    init_parms::Any
-    n_dims::Any
-    parm_names::Any
-    add_iters::Any
-    last_id::Any
+    parallel
+    radius
+    bounds
+    x_range
+    n_iters
+    p_eval
+    adapt_radius!
+    init_parms
+    n_dims
+    parm_names
+    add_iters
+    last_id
 end
 
 function Options(;
@@ -104,18 +104,18 @@ An MCMC chain object.
 - `radii`: a vector of chain radii 
 """
 @concrete mutable struct Chain
-    chain_id::Any
-    parms::Any
-    n_dims::Any
-    pattern::Any
-    radius::Any
-    acceptance::Any
-    all_parms::Any
-    radii::Any
-    level::Any
-    λ::Any
-    n_accept::Any
-    n_attempt::Any
+    chain_id
+    parms
+    n_dims
+    pattern
+    radius
+    acceptance
+    all_parms
+    radii
+    level
+    λ
+    n_accept
+    n_attempt
 end
 
 function Chain(id, parms, pattern, radius)
